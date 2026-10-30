@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Ops: Motion in Electromagnetic Fields</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d2257; --ink2:#12307a; --panel:#0f2766; --line:#3d5db3;
+  --paper:#f3f6ff; --muted:#b9c8f4; --chalk:#ffd23f; --cyan:#72e6ff;
+  --coral:#ff7c6b; --peri:#a6bcff; --ok:#6ef0a8; --bad:#ff8f7e;
+  --display:'Barlow Condensed','Arial Narrow','Helvetica Neue',Arial,sans-serif;
+  --body:'Barlow','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100vh; color:var(--paper); font-family:var(--body); font-size:18px; line-height:1.45;
+  background-color:var(--ink);
+  background-image:
+    linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:36px 36px;
+}
+#app{max-width:1200px; margin:0 auto; padding:14px 16px 40px}
+h1,h2,h3{font-family:var(--display); font-weight:700; line-height:1.05; margin:0}
+h1{font-size:clamp(54px,9vw,104px); letter-spacing:.5px}
+h2{font-size:clamp(26px,3.4vw,34px)}
+h3{font-size:24px}
+p{margin:.4em 0}
+b{font-weight:600}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:3px solid var(--chalk); outline-offset:2px}
+
+/* buttons */
+.btn{
+  min-height:48px; padding:10px 20px; border-radius:10px; border:2px solid var(--line);
+  background:var(--ink2); font-weight:600; font-size:18px;
+}
+.btn:hover{border-color:var(--peri)}
+.btn.primary{background:var(--chalk); color:#1a1a1a; border-color:var(--chalk)}
+.btn.primary:hover{background:#ffe27a}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.45; cursor:not-allowed}
+.tgl{display:flex; gap:8px; flex-wrap:wrap}
+.tbtn{min-height:46px; padding:8px 14px; border-radius:10px; border:2px solid var(--line); background:var(--ink2); font-weight:600}
+.tbtn.on{background:var(--cyan); color:#06204a; border-color:var(--cyan)}
+.tbtn[disabled]{opacity:.45; cursor:not-allowed}
+
+/* home */
+.hero{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:28px; align-items:center; padding:18px 0 8px}
+.hero .lede{font-size:21px; max-width:34ch; color:var(--muted)}
+.hero .sub{font-family:var(--display); font-size:26px; font-weight:600; color:var(--chalk); margin-top:10px}
+.herobox{background:rgba(7,22,66,.75); border:2px solid var(--line); border-radius:14px; padding:10px}
+.herobox canvas{display:block; width:100%; height:auto; border-radius:8px}
+.herolab{padding:8px 6px 2px; font-size:17px}
+.herolab input{width:100%; margin:6px 0 0; accent-color:var(--chalk); height:32px}
+.cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; margin:26px 0}
+.card{
+  text-align:left; background:var(--panel); border:2px solid var(--line); border-radius:14px;
+  padding:16px 18px 18px; display:flex; flex-direction:column; gap:6px; min-height:190px;
+}
+.card:hover{border-color:var(--chalk); transform:translateY(-2px)}
+.card .num{font-family:var(--display); font-size:44px; color:var(--chalk); line-height:1}
+.card .topic{color:var(--cyan); font-weight:600}
+.card .blurb{color:var(--muted); font-size:16px; flex:1}
+.stars{letter-spacing:4px; color:var(--chalk); font-size:22px}
+.stars .off{color:#46609f}
+.foot{display:flex; flex-wrap:wrap; gap:16px; align-items:center; color:var(--muted); font-size:16px}
+.how{background:rgba(7,22,66,.6); border-left:5px solid var(--chalk); padding:10px 16px; border-radius:0 10px 10px 0; margin:6px 0 0; max-width:70ch}
+
+/* play */
+.top{display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px}
+.top .ttl{display:flex; flex-direction:column}
+.top .ttl small{color:var(--cyan); font-weight:600; font-size:16px}
+.hud{display:flex; gap:10px; align-items:center}
+.pill{background:var(--ink2); border:2px solid var(--line); border-radius:999px; padding:4px 14px; font-weight:600; white-space:nowrap}
+.grid{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(310px,1fr); gap:16px; align-items:start}
+.stage{background:rgba(7,22,66,.8); border:2px solid var(--line); border-radius:14px; padding:8px}
+.stage canvas{display:block; width:100%; height:auto; border-radius:8px; touch-action:manipulation}
+.panel{background:var(--panel); border:2px solid var(--line); border-radius:14px; padding:16px 18px}
+.brief h2{margin-bottom:6px}
+.brief p{font-size:18px}
+.teacher{margin-top:8px; padding:6px 10px; border:2px dashed var(--chalk); border-radius:8px; color:var(--chalk); font-size:16px}
+.controls{display:flex; flex-direction:column; gap:14px; margin:14px 0}
+.row .lab{display:block; font-weight:600; color:var(--cyan); margin-bottom:4px; font-size:16px}
+.param .line{display:flex; gap:10px; align-items:center}
+.param input[type=range]{flex:1; min-width:0; height:34px; accent-color:var(--chalk)}
+.numbox{width:118px; min-height:44px; padding:6px 10px; border-radius:8px; border:2px solid var(--line); background:#071642; color:var(--paper); font:inherit; font-weight:600; text-align:right}
+.unit{min-width:44px; font-weight:600; color:var(--muted)}
+.pretty{display:block; color:var(--chalk); font-weight:600; font-size:17px; margin-top:2px}
+.actions{display:flex; gap:10px; flex-wrap:wrap}
+.opts{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0}
+.opts .btn{text-align:left; min-height:56px}
+.opts.one{grid-template-columns:1fr}
+.opt.right{background:var(--ok); color:#06301a; border-color:var(--ok)}
+.opt.wrong{background:#6d2a3b; border-color:var(--bad)}
+.timer{height:10px; border-radius:6px; background:#071642; overflow:hidden; margin:10px 0 0; border:1px solid var(--line)}
+.timer i{display:block; height:100%; width:100%; background:var(--cyan); transform-origin:left}
+.feedback{margin-top:14px; display:flex; flex-direction:column; gap:8px}
+.msg{padding:10px 14px; border-radius:10px; background:#0a1d52; border:2px solid var(--line)}
+.msg.good{border-color:var(--ok)}
+.msg.bad{border-color:var(--bad)}
+.msg.info{border-color:var(--peri)}
+.chip{display:flex; gap:10px; align-items:baseline; font-size:17px}
+.chip:before{content:''; width:12px; height:12px; border-radius:50%; background:var(--c); flex:none; transform:translateY(1px)}
+.hint{color:var(--muted); font-size:16px}
+.summary{max-width:720px; margin:20px auto; background:var(--panel); border:2px solid var(--line); border-radius:14px; padding:24px}
+.summary ul{list-style:none; padding:0; margin:12px 0; display:grid; gap:4px}
+.summary li{display:flex; justify-content:space-between; border-bottom:1px dashed var(--line); padding:3px 0}
+.big{font-family:var(--display); font-size:64px; color:var(--chalk); line-height:1}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  body{font-size:17px}
+  .opts{grid-template-columns:1fr}
+  .numbox{width:100px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important; animation:none!important}
+}
+.card{transition:border-color .15s, transform .15s}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   FIELD OPS: Motion in Electromagnetic Fields (IB Physics D.3)
+   One self-contained file. No libraries needed.
+   ============================================================ */
+
+/* ---------- constants (IB data booklet values) ---------- */
+const E_CH = 1.60e-19, U = 1.66e-27, MP = 1.67e-27, ME = 9.11e-31, MU0 = 4 * Math.PI * 1e-7;
+const TAU = Math.PI * 2;
+const TEACHER = /[?&]teacher\b/.test(location.search);
+const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* ---------- tiny helpers ---------- */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  if (props) for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  }
+  return el;
+}
+const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' };
+const sup = n => String(n).split('').map(c => SUP[c] || c).join('');
+function sci(x, sig = 2) {
+  if (x === 0) return '0';
+  const s = x < 0 ? '−' : '';
+  x = Math.abs(x);
+  let ex = Math.floor(Math.log10(x));
+  let ms = (x / Math.pow(10, ex)).toFixed(sig - 1);
+  if (parseFloat(ms) >= 10) { ex++; ms = (x / Math.pow(10, ex)).toFixed(sig - 1); }
+  if (ex >= -2 && ex <= 3) return s + x.toFixed(Math.max(0, sig - 1 - ex));
+  return `${s}${ms} × 10${sup(ex)}`;
+}
+function parseNum(s) {
+  s = String(s).trim().replace(/[−–]/g, '-').replace(/\s+/g, '').replace(/[x×*]10\^?/i, 'e').replace(/,/g, '.');
+  const v = Number(s);
+  return isFinite(v) && s !== '' ? v : NaN;
+}
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('fieldops-v1') || '{}'); } catch (e) { return {}; } },
+  set(o) { try { localStorage.setItem('fieldops-v1', JSON.stringify(o)); } catch (e) { /* storage blocked: fine */ } }
+};
+
+/* ---------- animation loops (cancelled whenever the screen changes) ---------- */
+let animToken = 0, loopToken = 0, cleanups = [];
+function stopAll() { animToken++; loopToken++; cleanups.forEach(f => { try { f(); } catch (e) {} }); cleanups = []; }
+function animate(ms, draw, done) {
+  const tok = ++animToken, t0 = performance.now();
+  if (REDUCE) ms = 1;
+  (function step(now) {
+    if (tok !== animToken) return;
+    const p = Math.min(1, (now - t0) / ms);
+    draw(p);
+    if (p < 1) requestAnimationFrame(step); else if (done) done();
+  })(t0);
+}
+function loop(fn) {
+  const tok = ++loopToken; let last = performance.now();
+  (function f(now) {
+    if (tok !== loopToken) return;
+    fn(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(f);
+  })(last);
+}
+
+/* ---------- canvas drawing helpers ---------- */
+function makeCanvas(W, H, label) {
+  const c = h('canvas', { width: W * 2, height: H * 2, role: 'img', 'aria-label': label || 'Physics diagram' });
+  const ctx = c.getContext('2d');
+  ctx.scale(2, 2);
+  return { c, ctx, W, H };
+}
+function txt(ctx, s, x, y, o = {}) {
+  ctx.font = `${o.weight || 600} ${o.size || 16}px Barlow, "Segoe UI", system-ui, sans-serif`;
+  ctx.textAlign = o.align || 'left'; ctx.textBaseline = o.base || 'alphabetic';
+  ctx.lineJoin = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = '#091b4f'; ctx.strokeText(s, x, y);
+  ctx.fillStyle = o.color || '#f3f6ff'; ctx.fillText(s, x, y);
+}
+function arrow(ctx, x1, y1, x2, y2, color, w = 4, head = 14) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - Math.cos(a) * head * 0.6, y2 - Math.sin(a) * head * 0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * Math.cos(a - 0.42), y2 - head * Math.sin(a - 0.42));
+  ctx.lineTo(x2 - head * Math.cos(a + 0.42), y2 - head * Math.sin(a + 0.42));
+  ctx.closePath(); ctx.fill();
+}
+function xmark(ctx, x, y, s, color, w = 2) {
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
+}
+function fdot(ctx, x, y, s, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, s, 0, TAU); ctx.fill(); }
+function ringSym(ctx, x, y, r, kind, color, w = 3) { // ⊙ (out) or ⊗ (into)
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+  if (kind === 'out') fdot(ctx, x, y, r * 0.3, color); else xmark(ctx, x, y, r * 0.55, color, w);
+}
+function fieldSyms(ctx, kind, x0, y0, x1, y1, gap, color) {
+  for (let y = y0 + gap / 2; y < y1; y += gap) for (let x = x0 + gap / 2; x < x1; x += gap)
+    kind === 'into' ? xmark(ctx, x, y, 4.5, color, 1.7) : fdot(ctx, x, y, 3, color);
+}
+function panelBg(ctx, W, H) { ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#091b4f'; ctx.fillRect(0, 0, W, H); }
+
+/* ---------- UI widgets ---------- */
+function param(o, onChange) {
+  const { label, unit, min, max, value, log = true, snap = v => Number(v.toPrecision(3)) } = o;
+  let val = value;
+  const slider = h('input', { type: 'range', min: 0, max: 1000, step: 1, 'aria-label': label });
+  const box = h('input', { type: 'text', inputmode: 'decimal', class: 'numbox', 'aria-label': label + ' (type a value)', autocomplete: 'off' });
+  const pretty = h('span', { class: 'pretty' });
+  const toS = v => Math.round(1000 * (log ? Math.log(v / min) / Math.log(max / min) : (v - min) / (max - min)));
+  const fromS = s => log ? min * Math.pow(max / min, s / 1000) : min + (max - min) * s / 1000;
+  function set(v, src) {
+    val = v;
+    if (src !== 'slider') slider.value = Math.max(0, Math.min(1000, toS(v)));
+    if (src !== 'box') box.value = String(Number(v.toPrecision(3)));
+    pretty.textContent = sci(v, 3) + ' ' + unit;
+  }
+  slider.addEventListener('input', () => { const v = snap(fromS(+slider.value)); set(v, 'slider'); box.value = String(v); onChange && onChange(v); });
+  box.addEventListener('input', () => { const v = parseNum(box.value); if (v > 0 || (!log && v >= 0)) { set(v, 'box'); onChange && onChange(v); } });
+  set(value);
+  const el = h('div', { class: 'row param' }, h('span', { class: 'lab' }, label),
+    h('div', { class: 'line' }, slider, box, h('span', { class: 'unit' }, unit)), pretty);
+  return { el, get: () => val, set, disable(f) { slider.disabled = f; box.disabled = f; } };
+}
+function toggleGroup(opts, onPick, initial) {
+  const wrap = h('div', { class: 'tgl', role: 'group' }), btns = {}; let cur = null;
+  function pickIt(k) {
+    cur = k;
+    for (const kk in btns) { btns[kk].classList.toggle('on', kk === k); btns[kk].setAttribute('aria-pressed', kk === k ? 'true' : 'false'); }
+    onPick && onPick(k);
+  }
+  opts.forEach(o => { btns[o.key] = h('button', { type: 'button', class: 'tbtn', 'aria-pressed': 'false', onclick: () => pickIt(o.key) }, o.label); wrap.append(btns[o.key]); });
+  if (initial) pickIt(initial);
+  return { el: wrap, get: () => cur, set: pickIt, disable(f) { Object.values(btns).forEach(b => b.disabled = f); } };
+}
+const row = (label, node) => h('div', { class: 'row' }, h('span', { class: 'lab' }, label), node);
+
+/* ============================================================
+   PHYSICS: shared direction maths
+   x right, y up the page, z out of the page
+   ============================================================ */
+const DIR = {
+  left:  { v: [-1, 0, 0], name: 'left',            px: [-1, 0] },
+  right: { v: [1, 0, 0],  name: 'right',           px: [1, 0] },
+  up:    { v: [0, 1, 0],  name: 'up the page',     px: [0, -1] },
+  down:  { v: [0, -1, 0], name: 'down the page',   px: [0, 1] },
+  out:   { v: [0, 0, 1],  name: 'out of the page' },
+  into:  { v: [0, 0, -1], name: 'into the page' }
+};
+const OPP = { left: 'right', right: 'left', up: 'down', down: 'up', out: 'into', into: 'out' };
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]].map(x => x + 0);
+function dirKey(vec) { for (const k in DIR) { const d = DIR[k].v; if (d[0] === vec[0] && d[1] === vec[1] && d[2] === vec[2]) return k; } return null; }
+/* F = q v × B. Returns direction key, or null if the force is zero. */
+function slapForce(sign, vk, bk) {
+  if (!sign || !vk) return null;
+  const f = cross3(DIR[vk].v, DIR[bk].v).map(x => x * sign + 0);
+  return dirKey(f);
+}
+
+/* ============================================================
+   MISSION 1 – Slap-rule reflexes (generated each play)
+   ============================================================ */
+const PART = {
+  proton:   { name: 'Proton',         sign: 1,  col: '#ff7c6b', lab: '+' },
+  electron: { name: 'Electron',       sign: -1, col: '#a6bcff', lab: '−' },
+  alpha:    { name: 'Alpha particle', sign: 1,  col: '#ff9bf0', lab: '2+' },
+  neutron:  { name: 'Neutron',        sign: 0,  col: '#c9d3ee', lab: 'n' }
+};
+function genSlap() {
+  const flat = ['left', 'right', 'up', 'down'], all = [...flat, 'out', 'into'];
+  const charged = () => pick(['proton', 'electron', 'alpha']);
+  const R = [];
+  const mk = (who, v, B) => ({ type: 'slap', who, v, B });
+  for (let i = 0; i < 4; i++) R.push(mk(i < 2 ? (i ? 'electron' : 'proton') : charged(), pick(flat), pick(['into', 'out'])));
+  for (let i = 0; i < 3; i++) {
+    const B = pick(flat), v = pick(all.filter(d => d !== B && d !== OPP[B]));
+    R.push(mk(charged(), v, B));
+  }
+  const Bz = pick(all);
+  const traps = shuffle([
+    mk('neutron', pick(flat), pick(['into', 'out'])),
+    mk(charged(), null, pick(all)),
+    mk(charged(), Math.random() < .5 ? Bz : OPP[Bz], Bz)
+  ]);
+  return R.concat(traps);
+}
+function explainSlap(r) {
+  const w = PART[r.who];
+  if (w.sign === 0) return 'A neutron has no charge, so a magnetic field exerts no force on it.';
+  if (!r.v) return 'The charge is at rest. Only <i>moving</i> charges feel a magnetic force, so F = 0.';
+  const f = slapForce(w.sign, r.v, r.B);
+  if (!f) return 'v is parallel to B, so θ = 0° and F = qvB sin θ = 0.';
+  const posDir = dirKey(cross3(DIR[r.v].v, DIR[r.B].v));
+  let s = `Right hand: fingers along B (${DIR[r.B].name}), thumb along v (${DIR[r.v].name}). The palm faces <b>${DIR[posDir].name}</b>, which is the force on a positive charge.`;
+  if (w.sign < 0) s += ` The electron is negative, so reverse it: <b>${DIR[f].name}</b>.`;
+  return s;
+}
+function slapAnswer(r) { const w = PART[r.who]; return slapForce(w.sign, r.v, r.B) || 'zero'; }
+
+const SLAP_OPTS = [['up', '↑ Up the page'], ['left', '← Left'], ['right', '→ Right'], ['down', '↓ Down the page'],
+  ['out', '⊙ Out of the page'], ['into', '⊗ Into the page'], ['zero', 'No force']];
+
+function drawSlap(ctx, W, H, r, reveal) {
+  panelBg(ctx, W, H);
+  const cx = W / 2, cy = H / 2 + 6;
+  const cyan = 'rgba(114,230,255,.55)';
+  if (r.B === 'into' || r.B === 'out') {
+    fieldSyms(ctx, r.B, 0, 0, W, H, 58, cyan);
+  } else {
+    const [dx, dy] = DIR[r.B].px;
+    for (let i = 0; i < 5; i++) {
+      if (dy === 0) { const y = 60 + i * 75; for (let x = 70; x < W - 40; x += 190) arrow(ctx, x, y, x + 100 * dx, y, cyan, 2, 11); }
+      else { const x = 90 + i * 135; for (let y = 60; y < H - 20; y += 190) arrow(ctx, x, y + (dy > 0 ? 0 : 110), x, y + (dy > 0 ? 110 : 0), cyan, 2, 11); }
+    }
+  }
+  txt(ctx, 'B ' + (r.B === 'into' ? 'into the page' : r.B === 'out' ? 'out of the page' : 'points ' + DIR[r.B].name), 16, 28, { size: 20, color: '#72e6ff' });
+  const w = PART[r.who];
+  fdot(ctx, cx, cy, 30, w.col);
+  txt(ctx, w.lab, cx, cy + 9, { size: 28, color: '#091b4f', align: 'center', weight: 700 });
+  txt(ctx, w.name, cx, cy - 46, { size: 18, align: 'center' });
+  if (!r.v) txt(ctx, 'at rest', cx, cy + 62, { size: 20, align: 'center', color: '#ffd23f' });
+  else if (r.v === 'out' || r.v === 'into') {
+    ringSym(ctx, cx + 80, cy - 66, 18, r.v, '#ffd23f', 3);
+    txt(ctx, 'v ' + (r.v === 'out' ? '(out of page)' : '(into page)'), cx + 106, cy - 60, { size: 18, color: '#ffd23f' });
+  } else {
+    const [dx, dy] = DIR[r.v].px;
+    arrow(ctx, cx + dx * 38, cy + dy * 38, cx + dx * 170, cy + dy * 170, '#ffd23f', 5, 18);
+    txt(ctx, 'v', cx + dx * 190 - (dx ? 0 : 20), cy + dy * 190 + 6, { size: 22, color: '#ffd23f', align: 'center' });
+  }
+  if (reveal) {
+    const f = slapAnswer(r);
+    if (f === 'zero') txt(ctx, 'F = 0', cx, cy + 112, { size: 30, align: 'center', color: '#6ef0a8' });
+    else if (f === 'out' || f === 'into') {
+      ringSym(ctx, cx - 100, cy + 66, 22, f, '#6ef0a8', 4);
+      txt(ctx, 'F ' + (f === 'out' ? '(out of page)' : '(into page)'), cx - 70, cy + 74, { size: 20, color: '#6ef0a8' });
+    } else {
+      const [dx, dy] = DIR[f].px;
+      arrow(ctx, cx + dx * 38, cy + dy * 38, cx + dx * 150, cy + dy * 150, '#6ef0a8', 7, 20);
+      txt(ctx, 'F', cx + dx * 176 - (dx ? 0 : 22), cy + dy * 176 + 8, { size: 26, color: '#6ef0a8', align: 'center' });
+    }
+  }
+}
+
+function engineSlap(ui, r) {
+  const { c, ctx, W, H } = makeCanvas(720, 440, 'A charged particle in a magnetic field');
+  ui.stage.append(c);
+  drawSlap(ctx, W, H, r, false);
+  ui.brief.append(h('h2', {}, `Question ${ui.i + 1}`), h('p', {}, 'Which way is the magnetic force on this particle? Use the right-hand slap rule.'));
+  const expected = slapAnswer(r);
+  if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, 'Answer: ' + (expected === 'zero' ? 'no force' : DIR[expected].name)));
+  let done = false, timerId = 0, t0 = 0;
+  const TIME = 15000;
+  const bar = h('i'); const timer = h('div', { class: 'timer', 'aria-hidden': 'true' }, bar);
+  const btns = {};
+  const opts = h('div', { class: 'opts' }, SLAP_OPTS.map(([k, l]) => (btns[k] = h('button', { class: 'btn opt', type: 'button', onclick: () => answer(k) }, l))));
+  ui.controls.append(opts);
+  if (ui.settings.timer) {
+    ui.controls.append(timer); t0 = performance.now();
+    timerId = setInterval(() => {
+      const left = Math.max(0, 1 - (performance.now() - t0) / TIME);
+      bar.style.transform = `scaleX(${left})`;
+      if (left <= 0) answer(null);
+    }, 80);
+    cleanups.push(() => clearInterval(timerId));
+  }
+  function keyH(e) {
+    const m = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', o: 'out', i: 'into', z: 'zero', '0': 'zero' };
+    if (m[e.key] && !done) { e.preventDefault(); answer(m[e.key]); }
+  }
+  document.addEventListener('keydown', keyH); cleanups.push(() => document.removeEventListener('keydown', keyH));
+  ui.hintLine(h('p', { class: 'hint' }, 'Keyboard: arrow keys, O (out), I (into), Z (no force).'));
+  function answer(k) {
+    if (done) return; done = true; clearInterval(timerId);
+    const ok = k === expected;
+    if (ok) ui.streak++; else ui.streak = 0;
+    let pts = 0;
+    if (ok) {
+      const left = ui.settings.timer ? Math.max(0, 1 - (performance.now() - t0) / TIME) : 0;
+      pts = 100 + Math.round(left * 50) + Math.min(40, 10 * (ui.streak - 1));
+    }
+    Object.values(btns).forEach(b => b.disabled = true);
+    if (k && btns[k]) btns[k].classList.add(ok ? 'right' : 'wrong');
+    btns[expected].classList.add('right');
+    drawSlap(ctx, W, H, r, true);
+    const head = k === null ? 'Time is up.' : ok ? 'Correct.' : `Not quite. The answer is ${expected === 'zero' ? 'no force' : DIR[expected].name}.`;
+    ui.done(pts, ok, `<b>${head}</b> ${explainSlap(r)}` + (ui.streak > 1 ? ` <b>Streak ×${ui.streak}.</b>` : ''));
+  }
+}
+
+/* ============================================================
+   MISSION 2 – Mass spectrometer lab
+   ============================================================ */
+const ion = (name, q, m, col) => ({ name, q, m, col });
+const I_PROTON = ion('Proton', 1, MP, '#ff7c6b'), I_ELECTRON = ion('Electron', -1, ME, '#a6bcff'), I_ALPHA = ion('Alpha particle', 2, 6.64e-27, '#ff9bf0');
+const I_NE20 = ion('Neon-20', 1, 20 * U, '#6ef0a8'), I_NE22 = ion('Neon-22', 1, 22 * U, '#ffd23f');
+
+function specRounds() {
+  const ISO = [['Carbon-12', 12], ['Nitrogen-14', 14], ['Oxygen-16', 16], ['Fluorine-19', 19], ['Neon-20', 20], ['Sodium-23', 23]];
+  const idx = Math.floor(Math.random() * ISO.length);
+  const others = shuffle(ISO.filter((_, i) => i !== idx)).slice(0, 3);
+  const opts = shuffle([ISO[idx], ...others]);
+  return [
+    { type: 'spec', title: 'Calibrate the detector', ions: [I_PROTON], v: 2.0e6, side: 'left', xt: 0.08, want: [0], avoid: [],
+      brief: 'Fire a <b>proton</b> at <b>2.0 × 10⁶ m s⁻¹</b>. Choose the field direction and strength so it lands in the green bin <b>8.0 cm to the left</b> of the slit.',
+      hint: 'The magnetic force is the centripetal force: qvB = mv²/r. The ion travels half a circle, so it lands x = 2r from the slit.' },
+    { type: 'spec', title: 'Electron beam', ions: [I_ELECTRON], v: 1.0e7, side: 'left', xt: 0.06, want: [0], avoid: [],
+      brief: 'An <b>electron</b> enters at <b>1.0 × 10⁷ m s⁻¹</b>. Put it in the bin <b>6.0 cm to the left</b>. Electrons are negative, so think about the direction.',
+      hint: 'Same radius equation, r = mv/qB, but the force on a negative charge is reversed.' },
+    { type: 'spec', title: 'Alpha particles', ions: [I_ALPHA], v: 1.5e6, side: 'right', xt: 0.10, want: [0], avoid: [],
+      brief: 'An <b>alpha particle</b> (charge +2e, mass 6.64 × 10⁻²⁷ kg) enters at <b>1.5 × 10⁶ m s⁻¹</b>. Land it in the bin <b>10.0 cm to the right</b>.',
+      hint: 'Charge is 2e = 3.20 × 10⁻¹⁹ C. Use r = x/2 in r = mv/qB.' },
+    { type: 'spec', title: 'Separate the isotopes', ions: [I_NE20, I_NE22], v: 1.0e5, side: 'right', xt: 0.09, want: [1], avoid: [0],
+      brief: 'Neon-20 and neon-22 ions (both 1+, masses 20 u and 22 u, u = 1.66 × 10⁻²⁷ kg) enter at <b>1.0 × 10⁵ m s⁻¹</b>. Put <b>neon-22</b> in the bin <b>9.0 cm to the right</b> while neon-20 misses it.',
+      hint: 'Heavier ions follow bigger circles. Tune B for the neon-22 and check where the neon-20 lands.' },
+    { type: 'specid', title: 'Identify the unknown ion', v: 1.0e5, B: 0.40, unknown: ISO[idx][1], opts,
+      brief: 'An unknown ion with charge <b>+e</b> enters at <b>1.0 × 10⁵ m s⁻¹</b> in a field of <b>0.40 T</b>. Measure where it lands, then work out its mass and identify the isotope.',
+      hint: 'x = 2r and r = mv/qB, so m = xqB/2v. Divide by 1.66 × 10⁻²⁷ kg to get the mass in u.' }
+  ];
+}
+function specLand(io, v, B, out) {
+  const q = io.q * E_CH, r = io.m * v / (Math.abs(q) * B), sx = Math.sign(q) * (out ? 1 : -1);
+  return { r, sx, dx: sx * 2 * r };
+}
+function drawSpec(ctx, W, H, st) {
+  panelBg(ctx, W, H);
+  const cm = 21, x0 = W / 2, y0 = H - 76;
+  const col = 'rgba(114,230,255,.5)';
+  if (st.Bdir) fieldSyms(ctx, st.Bdir, 8, 8, W - 8, y0 - 4, 44, col);
+  else txt(ctx, 'Choose a field direction', x0, 70, { size: 20, align: 'center', color: '#b9c8f4' });
+  // detector plate with slit
+  ctx.fillStyle = '#4a68c4'; ctx.fillRect(0, y0, x0 - 7, 14); ctx.fillRect(x0 + 7, y0, W - x0 - 7, 14);
+  arrow(ctx, x0, y0 + 40, x0, y0 + 18, '#b9c8f4', 2, 8);
+  txt(ctx, 'ion source', x0, y0 + 60, { size: 15, align: 'center', color: '#b9c8f4' });
+  // ruler
+  for (let k = 2; k <= 18; k += 2) for (const s of [-1, 1]) {
+    const x = x0 + s * k * cm;
+    ctx.strokeStyle = '#b9c8f4'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y0 + 14); ctx.lineTo(x, y0 + 21); ctx.stroke();
+    if (k % 4 === 0) txt(ctx, k + ' cm', x, y0 + 38, { size: 13, align: 'center', color: '#b9c8f4' });
+  }
+  // target bin
+  if (st.xt) {
+    const sd = st.side === 'left' ? -1 : 1, tol = Math.max(0.05 * st.xt, 0.003);
+    const a = x0 + sd * (st.xt - tol) * 100 * cm, b = x0 + sd * (st.xt + tol) * 100 * cm;
+    ctx.fillStyle = '#6ef0a8'; ctx.fillRect(Math.min(a, b), y0 - 12, Math.abs(b - a), 12);
+    txt(ctx, 'target ' + (st.xt * 100).toFixed(1) + ' cm', (a + b) / 2, y0 - 18, { size: 15, align: 'center', color: '#6ef0a8' });
+  }
+  // ion paths
+  (st.res || []).forEach(rs => {
+    const R = rs.r * 100 * cm, th = Math.PI * st.p;
+    ctx.strokeStyle = rs.ion.col; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath();
+    for (let a = 0; a <= th + 1e-6; a += 0.04) {
+      const x = x0 + rs.sx * R * (1 - Math.cos(a)), y = y0 - R * Math.sin(a);
+      a === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    const hx = x0 + rs.sx * R * (1 - Math.cos(th)), hy = y0 - R * Math.sin(th);
+    fdot(ctx, hx, hy, 7, rs.ion.col);
+    if (st.p >= 1) {
+      const lx = x0 + rs.dx * 100 * cm;
+      if (lx > 12 && lx < W - 12) {
+        txt(ctx, rs.ion.name + ': ' + (Math.abs(rs.dx) * 100).toFixed(1) + ' cm', lx, y0 - 44 - (rs.k || 0) * 22, { size: 15, align: 'center', color: rs.ion.col });
+      } else txt(ctx, rs.ion.name + ' hit the chamber wall', W / 2, 36 + (rs.k || 0) * 22, { size: 17, align: 'center', color: rs.ion.col });
+    }
+  });
+}
+
+function engineSpec(ui, r) {
+  const { c, ctx, W, H } = makeCanvas(800, 420, 'Mass spectrometer: ions travel a semicircle and land on a detector plate');
+  ui.stage.append(c);
+  const st = { Bdir: null, xt: r.xt, side: r.side, p: 1, res: null };
+  drawSpec(ctx, W, H, st);
+  ui.brief.append(h('h2', {}, r.title), h('p', { html: r.brief }));
+  const w0 = r.ions[r.want[0]], sideSign = r.side === 'left' ? -1 : 1;
+  const Bneed = 2 * w0.m * r.v / (Math.abs(w0.q) * E_CH * r.xt);
+  const needOut = sideSign * Math.sign(w0.q) > 0;
+  if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, `Answer: B = ${sci(Bneed, 3)} T, ${needOut ? 'out of' : 'into'} the page.`));
+  const lo = Number((Bneed / 4).toPrecision(1)), hi = Number((Bneed * 3).toPrecision(1));
+  const dirT = toggleGroup([{ key: 'into', label: '⊗ B into page' }, { key: 'out', label: '⊙ B out of page' }], k => { st.Bdir = k; st.res = null; st.p = 1; drawSpec(ctx, W, H, st); });
+  const Bp = param({ label: 'Field strength B', unit: 'T', min: lo, max: hi, value: Math.sqrt(lo * hi) });
+  ui.controls.append(row('Field direction', dirT.el), Bp.el);
+  let shots = 0, hinted = false, busy = false, finished = false;
+  const fireBtn = h('button', { class: 'btn primary', type: 'button', onclick: fire }, 'Fire ions');
+  const hintBtn = h('button', { class: 'btn ghost', type: 'button', onclick: () => { hinted = true; hintBtn.disabled = true; ui.say(`<b>Hint (−20 points).</b> ${r.hint}`, 'info'); } }, 'Hint');
+  ui.actions.append(fireBtn, hintBtn);
+  function finish(pts, ok, html) { finished = true; [fireBtn, hintBtn].forEach(b => b.disabled = true); dirT.disable(true); Bp.disable(true); ui.done(pts, ok, html); }
+  function solution() {
+    return `<b>Solution:</b> x = 2r and r = mv/qB, so B = 2mv/(qx) = 2(${sci(w0.m, 3)})(${sci(r.v, 2)}) / (${sci(Math.abs(w0.q) * E_CH, 3)})(${sci(r.xt, 2)}) = <b>${sci(Bneed, 2)} T</b>, ${needOut ? 'out of' : 'into'} the page (${w0.q > 0 ? 'positive' : 'negative'} ions curve ${r.side} when B is ${needOut ? 'out of' : 'into'} the page).`;
+  }
+  function fire() {
+    if (busy || finished) return;
+    if (!st.Bdir) { ui.say('Choose a field direction first.', 'bad'); return; }
+    const B = Bp.get(); if (!(B > 0)) { ui.say('Enter a field strength above zero.', 'bad'); return; }
+    shots++; busy = true; fireBtn.disabled = true;
+    const tol = Math.max(0.05 * r.xt, 0.003);
+    st.res = r.ions.map((io, k) => { const L = specLand(io, r.v, B, st.Bdir === 'out'); return { ion: io, k, ...L, hit: L.sx === sideSign && Math.abs(2 * L.r - r.xt) <= tol }; });
+    animate(1700, p => { st.p = p; drawSpec(ctx, W, H, st); }, () => {
+      busy = false; fireBtn.disabled = false;
+      const lines = st.res.map(rs => {
+        const x = 2 * rs.r;
+        let s;
+        if (rs.sx !== sideSign) s = `curved the wrong way (to the ${rs.sx < 0 ? 'left' : 'right'})`;
+        else if (rs.hit) s = `landed ${(x * 100).toFixed(1)} cm out, inside the bin`;
+        else s = `landed ${(x * 100).toFixed(1)} cm out, ${x < r.xt ? 'short of' : 'beyond'} the bin`;
+        return `<div class="chip" style="--c:${rs.ion.col}"><span><b>${rs.ion.name}</b> ${s}.</span></div>`;
+      }).join('');
+      const ok = r.want.every(k => st.res[k].hit) && r.avoid.every(k => !st.res[k].hit);
+      if (ok) {
+        const pts = Math.max(20, 100 - 20 * (shots - 1) - (hinted ? 20 : 0));
+        finish(pts, true, `<b>Direct hit${shots === 1 ? ' on the first shot' : ''}.</b>${lines}${solution()}`);
+      } else {
+        ui.say(lines + (r.avoid.length && r.want.every(k => st.res[k].hit) ? '<div>Neon-20 is landing in the bin too. Adjust B so only neon-22 does.</div>' : ''), 'bad');
+        if (shots >= 3 && !ui.hasReveal) {
+          ui.hasReveal = true;
+          ui.actions.append(h('button', { class: 'btn ghost', type: 'button', onclick: () => finish(0, false, solution()) }, 'Show solution'));
+        }
+      }
+    });
+  }
+}
+
+function engineSpecId(ui, r) {
+  const { c, ctx, W, H } = makeCanvas(800, 420, 'An unknown ion lands on the detector');
+  ui.stage.append(c);
+  const io = ion('Unknown ion', 1, r.unknown * U, '#ffd23f');
+  const L = specLand(io, r.v, r.B, false); // B into page: + ions curve left
+  const st = { Bdir: 'into', xt: 0, side: 'left', p: 0, res: [{ ion: io, k: 0, ...L }] };
+  ui.brief.append(h('h2', {}, r.title), h('p', { html: r.brief }));
+  const xcm = 2 * L.r * 100;
+  if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, `Answer: x = ${xcm.toFixed(1)} cm, m = ${r.unknown} u.`));
+  animate(1800, p => { st.p = p; drawSpec(ctx, W, H, st); });
+  ui.controls.append(h('p', { class: 'msg info', html: `The ion landed <b>${xcm.toFixed(1)} cm</b> from the slit.` }));
+  let tries = 0, done = false, hinted = false;
+  const btns = [];
+  const box = h('div', { class: 'opts' }, r.opts.map(([n, a]) => { const b = h('button', { class: 'btn opt', type: 'button', onclick: () => choose(a, b) }, n); btns.push(b); return b; }));
+  ui.controls.append(box);
+  const hintBtn = h('button', { class: 'btn ghost', type: 'button', onclick: () => { hinted = true; hintBtn.disabled = true; ui.say(`<b>Hint (−20 points).</b> ${r.hint}`, 'info'); } }, 'Hint');
+  ui.actions.append(hintBtn);
+  const sol = `<b>Solution:</b> m = xqB/2v = (${sci(xcm / 100, 3)})(${sci(E_CH, 3)})(${r.B}) / 2(${sci(r.v, 2)}) = ${sci(io.m, 3)} kg. Divide by 1.66 × 10⁻²⁷ kg: <b>${r.unknown} u</b>.`;
+  function choose(a, b) {
+    if (done) return; tries++;
+    if (a === r.unknown) {
+      done = true; b.classList.add('right'); btns.forEach(x => x.disabled = true); hintBtn.disabled = true;
+      ui.done(Math.max(20, (tries === 1 ? 100 : 50) - (hinted ? 20 : 0)), true, `<b>Correct.</b> ${sol}`);
+    } else {
+      b.classList.add('wrong'); b.disabled = true;
+      if (tries >= 2) {
+        done = true; btns.forEach(x => { x.disabled = true; if (r.opts.find(o => o[0] === x.textContent)[1] === r.unknown) x.classList.add('right'); });
+        hintBtn.disabled = true; ui.done(0, false, `<b>Not this time.</b> ${sol}`);
+      } else ui.say('Not that one. Check m = xqB/2v and try again (half marks).', 'bad');
+    }
+  }
+}
+
+/* ============================================================
+   MISSION 3 – Electric and crossed fields
+   ============================================================ */
+const P_PROTON = { name: 'Proton', q: 1, m: MP, col: '#ff7c6b' }, P_ELECTRON = { name: 'Electron', q: -1, m: ME, col: '#a6bcff' }, P_ALPHA = { name: 'Alpha particle', q: 2, m: 6.64e-27, col: '#ff9bf0' };
+const chamberRounds = () => [
+  { type: 'chamber', title: 'Deflect an electron', L: .05, d: .03, yt: .01, tol: .0012,
+    parts: [{ ...P_ELECTRON, v: 2.0e7, want: true }], E: { dir: 'choose', range: [2e3, 1e5], unit: 'N/C' }, B: null,
+    brief: 'An electron enters between two plates at <b>2.0 × 10⁷ m s⁻¹</b>. The plates are <b>5.0 cm</b> long. Choose the field direction and strength so the electron leaves through the slot <b>1.0 cm above</b> the entry line.',
+    hint: 'Constant speed along the plates: t = L/v. Constant acceleration across: a = qE/m and y = ½at². Which way does the force point on an electron?' },
+  { type: 'chamber', title: 'Deflect a proton', L: .06, d: .03, yt: .008, tol: .0012,
+    parts: [{ ...P_PROTON, v: 1.0e6, want: true }], E: { dir: 'choose', range: [5e3, 3e5], unit: 'N/C' }, B: null,
+    brief: 'A proton enters at <b>1.0 × 10⁶ m s⁻¹</b>. The plates are <b>6.0 cm</b> long. Make it leave through the slot <b>0.80 cm above</b> the entry line.',
+    hint: 'Same method as the electron: t = L/v, a = qE/m, y = ½at². The proton accelerates along the field.' },
+  { type: 'chamber', title: 'Pick the speed', L: .10, d: .02, yt: 0, tol: .004,
+    parts: [{ ...P_PROTON, name: 'Proton (1.0 × 10⁵ m/s)', v: 1.0e5, want: false, col: '#ff7c6b' },
+            { ...P_PROTON, name: 'Proton (2.0 × 10⁵ m/s)', v: 2.0e5, want: true, col: '#ffd23f' },
+            { ...P_PROTON, name: 'Proton (4.0 × 10⁵ m/s)', v: 4.0e5, want: false, col: '#6ef0a8' }],
+    E: { dir: 'down', fixed: 2.0e4, unit: 'N/C' }, B: { dir: 'choose', range: [0.02, 0.5], unit: 'T' },
+    brief: 'Three protons enter together. The electric field is fixed at <b>2.0 × 10⁴ N C⁻¹, pointing down</b>. Add a magnetic field so that <b>only the 2.0 × 10⁵ m s⁻¹</b> proton goes straight through the slot.',
+    hint: 'The forces must balance: qE = qvB, so v = E/B. The magnetic force must point up, against the electric force.' },
+  { type: 'chamber', title: 'Voltage selector', L: .08, d: .02, yt: 0, tol: .0025,
+    parts: [{ ...P_PROTON, name: 'Proton (2.0 × 10⁵ m/s)', v: 2.0e5, want: false, col: '#ff7c6b' },
+            { ...P_PROTON, name: 'Proton (4.5 × 10⁵ m/s)', v: 4.5e5, want: true, col: '#ffd23f' },
+            { ...P_PROTON, name: 'Proton (8.0 × 10⁵ m/s)', v: 8.0e5, want: false, col: '#6ef0a8' }],
+    E: { dir: 'choose', range: [50, 1500], unit: 'V', volts: true }, B: { dir: 'out', fixed: 0.040, unit: 'T' },
+    brief: 'The plates are <b>2.0 cm apart</b> and the magnetic field is fixed at <b>0.040 T, out of the page</b>. Choose the plate polarity and voltage so that only the <b>4.5 × 10⁵ m s⁻¹</b> proton passes straight through.',
+    hint: 'First find the E-field needed: E = vB. Then E = V/d, so V = Ed. Which way must the electric force point?' },
+  { type: 'chamber', title: 'Blind to charge and mass', L: .06, d: .02, yt: 0, tol: .006,
+    parts: [{ ...P_PROTON, v: 2.0e5, want: true }, { ...P_ELECTRON, v: 2.0e5, want: true }, { ...P_ALPHA, v: 2.0e5, want: true }],
+    E: { dir: 'down', fixed: 3.0e4, unit: 'N/C' }, B: { dir: 'choose', range: [0.02, 0.8], unit: 'T' },
+    brief: 'A proton, an electron and an alpha particle all enter at <b>2.0 × 10⁵ m s⁻¹</b>. The electric field is fixed at <b>3.0 × 10⁴ N C⁻¹, pointing down</b>. Choose B so that <b>all three</b> go straight through.',
+    hint: 'qE = qvB. Does q appear on both sides? Does m matter at all?' },
+  { type: 'chamber', title: 'Speedometer', L: .10, d: .02, yt: 0, tol: .004, askSpeed: 2.4e5,
+    parts: [{ ...P_PROTON, name: 'Mystery proton', v: 2.4e5, want: true }],
+    E: { dir: 'down', fixed: 1.2e4, unit: 'N/C' }, B: { dir: 'choose', range: [0.01, 0.3], unit: 'T' },
+    brief: 'A proton enters at a speed you are not told. The electric field is fixed at <b>1.2 × 10⁴ N C⁻¹, pointing down</b>. Tune B until the proton goes straight through the slot, then <b>calculate its speed</b>.',
+    hint: 'When it goes straight, qE = qvB. Use the B you found: v = E/B.' }
+];
+
+function simChamber(p, Ey, Bz, L, d) {
+  const qm = p.q * E_CH / p.m, v0 = p.v, Tc = L / v0, wc = Math.abs(qm * Bz);
+  let dt = Tc / 3000; if (wc > 0) dt = Math.min(dt, 0.04 / wc);
+  const tmax = 3 * Tc, maxSteps = 250000;
+  const every = Math.max(1, Math.ceil(Math.min(Math.ceil(tmax / dt), maxSteps) / 700));
+  let x = 0, y = 0, vx = v0, vy = 0, t = 0, step = 0;
+  const pts = [[0, 0]], ax = (vy_) => qm * vy_ * Bz, ay = (vx_) => qm * (Ey - vx_ * Bz);
+  while (t < tmax && step < maxSteps) {
+    const a1x = ax(vy), a1y = ay(vx);
+    const v2x = vx + a1x * dt / 2, v2y = vy + a1y * dt / 2, a2x = ax(v2y), a2y = ay(v2x);
+    const v3x = vx + a2x * dt / 2, v3y = vy + a2y * dt / 2, a3x = ax(v3y), a3y = ay(v3x);
+    const v4x = vx + a3x * dt, v4y = vy + a3y * dt, a4x = ax(v4y), a4y = ay(v4x);
+    const nx = x + dt / 6 * (vx + 2 * v2x + 2 * v3x + v4x), ny = y + dt / 6 * (vy + 2 * v2y + 2 * v3y + v4y);
+    const nvx = vx + dt / 6 * (a1x + 2 * a2x + 2 * a3x + a4x), nvy = vy + dt / 6 * (a1y + 2 * a2y + 2 * a3y + a4y);
+    step++; t += dt;
+    if (nx >= L) {
+      const f = (L - x) / (nx - x), yE = y + f * (ny - y);
+      if (Math.abs(yE) >= d / 2) { pts.push([x + f * (nx - x), Math.sign(yE) * d / 2]); return { pts, end: 'plate', y: Math.sign(yE) }; }
+      pts.push([L, yE]); return { pts, end: 'exit', y: yE };
+    }
+    if (Math.abs(ny) >= d / 2) { pts.push([nx, Math.sign(ny) * d / 2]); return { pts, end: 'plate', y: Math.sign(ny) }; }
+    if (nx < 0) { pts.push([0, ny]); return { pts, end: 'back', y: ny }; }
+    x = nx; y = ny; vx = nvx; vy = nvy;
+    if (step % every === 0) pts.push([x, y]);
+  }
+  pts.push([x, y]);
+  return { pts, end: 'trapped', y };
+}
+
+function chamberGeom(r, W, H) {
+  const s = Math.min((W - 210) / r.L, (H - 130) / r.d), x0 = (W - r.L * s) / 2 + 10, cy = H / 2;
+  return { s, x0, cy, x1: x0 + r.L * s, yTop: cy - r.d * s / 2, yBot: cy + r.d * s / 2 };
+}
+function drawChamber(ctx, W, H, r, st) {
+  panelBg(ctx, W, H);
+  const g = chamberGeom(r, W, H);
+  ctx.fillStyle = 'rgba(114,230,255,.06)'; ctx.fillRect(g.x0, g.yTop, g.x1 - g.x0, g.yBot - g.yTop);
+  if (st.Bdir) fieldSyms(ctx, st.Bdir, g.x0 + 4, g.yTop + 4, g.x1 - 4, g.yBot - 4, 34, 'rgba(114,230,255,.6)');
+  // plates
+  const hasE = !!st.Edir;
+  const topCol = !hasE ? '#4a68c4' : st.Edir === 'down' ? '#ff7c6b' : '#a6bcff';
+  const botCol = !hasE ? '#4a68c4' : st.Edir === 'down' ? '#a6bcff' : '#ff7c6b';
+  ctx.fillStyle = topCol; ctx.fillRect(g.x0, g.yTop - 11, g.x1 - g.x0, 11);
+  ctx.fillStyle = botCol; ctx.fillRect(g.x0, g.yBot, g.x1 - g.x0, 11);
+  if (hasE) {
+    const ts = st.Edir === 'down' ? '+' : '−', bs = st.Edir === 'down' ? '−' : '+';
+    for (let x = g.x0 + 24; x < g.x1 - 10; x += 56) { txt(ctx, ts, x, g.yTop - 14, { size: 18, align: 'center' }); txt(ctx, bs, x, g.yBot + 28, { size: 18, align: 'center' }); }
+    const dy = st.Edir === 'down' ? 1 : -1;
+    for (let x = g.x0 + 60; x < g.x1 - 30; x += 110) arrow(ctx, x, g.cy - dy * 22, x, g.cy + dy * 22, 'rgba(255,210,63,.75)', 3, 11);
+  }
+  // gun + slot wall
+  ctx.fillStyle = '#4a68c4'; ctx.fillRect(g.x0 - 46, g.cy - 14, 40, 28); txt(ctx, 'gun', g.x0 - 26, g.cy + 42, { size: 14, align: 'center', color: '#b9c8f4' });
+  const ys = g.cy - r.yt * g.s, tp = Math.max(7, r.tol * g.s);
+  ctx.fillStyle = '#4a68c4'; ctx.fillRect(g.x1, g.yTop - 11, 9, Math.max(0, ys - tp - (g.yTop - 11))); ctx.fillRect(g.x1, ys + tp, 9, Math.max(0, g.yBot + 11 - (ys + tp)));
+  ctx.strokeStyle = '#6ef0a8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(g.x1 + 14, ys - tp); ctx.lineTo(g.x1 + 4, ys - tp); ctx.moveTo(g.x1 + 14, ys + tp); ctx.lineTo(g.x1 + 4, ys + tp); ctx.stroke();
+  txt(ctx, 'slot', g.x1 + 20, ys + 5, { size: 15, color: '#6ef0a8' });
+  // scale note
+  txt(ctx, `plates ${(r.L * 100).toFixed(1)} cm long, ${(r.d * 100).toFixed(1)} cm apart`, W / 2, H - 14, { size: 14, align: 'center', color: '#b9c8f4' });
+  // particle paths
+  (st.sims || []).forEach(sm => {
+    const n = sm.sim.pts.length, upto = Math.max(1, Math.round((n - 1) * st.p));
+    ctx.strokeStyle = sm.part.col; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.beginPath();
+    for (let i = 0; i <= upto; i++) { const [px, py] = sm.sim.pts[i]; const X = g.x0 + px * g.s, Y = g.cy - py * g.s; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    ctx.stroke();
+    const [hx, hy] = sm.sim.pts[upto]; fdot(ctx, g.x0 + hx * g.s, g.cy - hy * g.s, 6, sm.part.col);
+  });
+}
+
+function engineChamber(ui, r) {
+  const { c, ctx, W, H } = makeCanvas(800, 380, 'Particles crossing a region with electric and magnetic fields');
+  ui.stage.append(c);
+  const st = { Edir: r.E && r.E.dir !== 'choose' ? r.E.dir : null, Bdir: r.B && r.B.dir !== 'choose' ? r.B.dir : null, sims: null, p: 1 };
+  const redraw = () => { st.sims = null; st.p = 1; drawChamber(ctx, W, H, r, st); };
+  drawChamber(ctx, W, H, r, st);
+  ui.brief.append(h('h2', {}, r.title), h('p', { html: r.brief }));
+  // solution values (for teacher panel and "show solution")
+  const solnText = chamberSolution(r);
+  if (TEACHER) ui.brief.append(h('div', { class: 'teacher', html: 'Answer: ' + solnText.short }));
+  let Ep = null, Bp = null;
+  const ctl = ui.controls;
+  if (r.E) {
+    if (r.E.dir === 'choose') ctl.append(row('Electric field direction', toggleGroup([{ key: 'down', label: 'E ↓ top plate +' }, { key: 'up', label: 'E ↑ bottom plate +' }], k => { st.Edir = k; redraw(); }).el));
+    else ctl.append(h('div', { class: 'msg info', html: `Electric field: <b>${r.E.dir === 'down' ? 'down' : 'up'}</b>${r.E.fixed ? ` at <b>${sci(r.E.fixed, 2)} ${r.E.unit}</b>` : ''}.` }));
+    if (!r.E.fixed) { const mid = Math.sqrt(r.E.range[0] * r.E.range[1]); Ep = param({ label: r.E.volts ? 'Plate voltage V' : 'Electric field strength E', unit: r.E.unit, min: r.E.range[0], max: r.E.range[1], value: mid }); ctl.append(Ep.el); }
+  }
+  if (r.B) {
+    if (r.B.dir === 'choose') ctl.append(row('Magnetic field direction', toggleGroup([{ key: 'into', label: '⊗ B into page' }, { key: 'out', label: '⊙ B out of page' }], k => { st.Bdir = k; redraw(); }).el));
+    else ctl.append(h('div', { class: 'msg info', html: `Magnetic field: <b>${r.B.dir === 'into' ? 'into' : 'out of'} the page</b>${r.B.fixed ? ` at <b>${sci(r.B.fixed, 3)} T</b>` : ''}.` }));
+    if (!r.B.fixed) { const mid = Math.sqrt(r.B.range[0] * r.B.range[1]); Bp = param({ label: 'Magnetic field strength B', unit: 'T', min: r.B.range[0], max: r.B.range[1], value: mid }); ctl.append(Bp.el); }
+  }
+  let shots = 0, hinted = false, busy = false, finished = false, passed = false, bUsed = null, speedTries = 0;
+  const fireBtn = h('button', { class: 'btn primary', type: 'button', onclick: fire }, 'Fire particles');
+  const hintBtn = h('button', { class: 'btn ghost', type: 'button', onclick: () => { hinted = true; hintBtn.disabled = true; ui.say(`<b>Hint (−20 points).</b> ${r.hint}`, 'info'); } }, 'Hint');
+  ui.actions.append(fireBtn, hintBtn);
+  const lock = () => { [fireBtn, hintBtn].forEach(b => b.disabled = true); Ep && Ep.disable(true); Bp && Bp.disable(true); };
+  const base = () => Math.max(20, 100 - 20 * (shots - 1) - (hinted ? 20 : 0));
+  function finish(pts, ok, html) { finished = true; lock(); ui.done(pts, ok, html); }
+  function fire() {
+    if (busy || finished) return;
+    if (r.E && r.E.dir === 'choose' && !st.Edir) { ui.say('Choose the electric field direction first.', 'bad'); return; }
+    if (r.B && r.B.dir === 'choose' && !st.Bdir) { ui.say('Choose the magnetic field direction first.', 'bad'); return; }
+    let Emag = 0, Bmag = 0;
+    if (r.E) Emag = r.E.fixed || Ep.get(); if (r.E && r.E.volts) Emag = Emag / r.d;
+    if (r.B) Bmag = r.B.fixed || Bp.get();
+    if (!(Emag >= 0) || !(Bmag >= 0)) { ui.say('Enter field strengths above zero.', 'bad'); return; }
+    const Ey = st.Edir ? (st.Edir === 'down' ? -Emag : Emag) : 0;
+    const Bz = st.Bdir ? (st.Bdir === 'into' ? -Bmag : Bmag) : 0;
+    shots++; busy = true; fireBtn.disabled = true; bUsed = Bmag;
+    st.sims = r.parts.map(pt => ({ part: pt, sim: simChamber(pt, Ey, Bz, r.L, r.d) }));
+    st.sims.forEach(sm => { sm.pass = sm.sim.end === 'exit' && Math.abs(sm.sim.y - r.yt) <= r.tol; });
+    animate(1900, p => { st.p = p; drawChamber(ctx, W, H, r, st); }, () => {
+      busy = false; fireBtn.disabled = false;
+      const lines = st.sims.map(sm => `<div class="chip" style="--c:${sm.part.col}"><span><b>${sm.part.name}</b> ${outcome(sm, r)}</span></div>`).join('');
+      const ok = st.sims.every(sm => sm.pass === !!sm.part.want);
+      if (ok && r.askSpeed) {
+        passed = true; lock(); ui.say(lines + '<div><b>Straight through.</b> Now calculate the speed of the proton from your settings.</div>', 'good'); askSpeedForm();
+      } else if (ok) {
+        finish(base(), true, `<b>${shots === 1 ? 'First shot!' : 'Success.'}</b>${lines}<b>Solution:</b> ${solnText.long}`);
+      } else {
+        ui.say(lines, 'bad');
+        if (shots >= 3 && !ui.hasReveal) { ui.hasReveal = true; ui.actions.append(h('button', { class: 'btn ghost', type: 'button', onclick: () => finish(0, false, `<b>Solution:</b> ${solnText.long}`) }, 'Show solution')); }
+      }
+    });
+  }
+  function askSpeedForm() {
+    const inp = h('input', { type: 'text', inputmode: 'decimal', class: 'numbox', 'aria-label': 'Speed in metres per second', autocomplete: 'off', placeholder: 'e.g. 3.0e5' });
+    const go = h('button', { class: 'btn primary', type: 'button', onclick: submit }, 'Check speed');
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+    ui.actions.append(h('div', { class: 'param' }, h('span', { class: 'lab' }, 'Speed of the proton (m s⁻¹)'), h('div', { class: 'line' }, inp, h('span', { class: 'unit' }, 'm s⁻¹'), go)));
+    function submit() {
+      const v = parseNum(inp.value); if (!(v > 0)) { ui.say('Type the speed as a number, e.g. 3.0e5.', 'bad'); return; }
+      speedTries++;
+      if (Math.abs(v - r.askSpeed) / r.askSpeed <= 0.08) {
+        finish(Math.max(20, base() - 20 * (speedTries - 1)), true, `<b>Correct.</b> At the balance point qE = qvB, so v = E/B = ${sci(r.E.fixed, 2)} / ${sci(bUsed, 2)} ≈ <b>${sci(r.askSpeed, 2)} m s⁻¹</b>. The charge cancelled, and the mass never mattered.`);
+      } else if (speedTries >= 2) finish(0, false, `<b>The speed was about ${sci(r.askSpeed, 2)} m s⁻¹.</b> At balance, qE = qvB so v = E/B = ${sci(r.E.fixed, 2)} / ${sci(bUsed, 2)}.`);
+      else ui.say('Not quite. At balance the two forces are equal: qE = qvB. Rearrange for v.', 'bad');
+    }
+  }
+}
+function outcome(sm, r) {
+  const e = sm.sim.end, y = sm.sim.y;
+  if (sm.pass) return 'went through the slot ✓';
+  if (e === 'plate') return `hit the ${y > 0 ? 'top' : 'bottom'} plate.`;
+  if (e === 'exit') { const dy = (y - r.yt) * 100; return `left ${Math.abs(dy).toFixed(2)} cm ${dy > 0 ? 'above' : 'below'} the slot.`; }
+  if (e === 'back') return 'turned round and came back out.';
+  return 'got trapped, circling inside.';
+}
+function chamberSolution(r) {
+  const p0 = r.parts.find(p => p.want) || r.parts[0];
+  const q = Math.abs(p0.q) * E_CH;
+  if (!r.B) { // deflection
+    const E = 2 * p0.m * p0.v * p0.v * r.yt / (q * r.L * r.L);
+    const forceUp = r.yt > 0, qpos = p0.q > 0;
+    const dir = (forceUp === qpos) ? 'up' : 'down';
+    return { short: `E = ${sci(E, 3)} N/C, pointing ${dir}.`,
+      long: `t = L/v, a = qE/m and y = ½at² give E = 2mv²y/(qL²) = <b>${sci(E, 2)} N C⁻¹</b>, pointing <b>${dir}</b> (${qpos ? 'a proton accelerates along E' : 'an electron accelerates against E'}).` };
+  }
+  const v = r.askSpeed || r.parts.find(p => p.want).v;
+  if (r.E.fixed) {
+    const B = r.E.fixed / v;
+    return { short: `B = ${sci(B, 3)} T, ${r.askSpeed ? '' : 'into the page. '}${r.askSpeed ? `speed = ${sci(v, 2)} m/s` : ''}`.trim(),
+      long: `Balance the forces: qE = qvB, so B = E/v = ${sci(r.E.fixed, 2)} / ${sci(v, 2)} = <b>${sci(B, 2)} T</b>, <b>into the page</b> (the magnetic force on a positive charge must point up, opposing the downward electric force).` };
+  }
+  const E = v * r.B.fixed, V = E * r.d;
+  return { short: `V = ${sci(V, 3)} V with the top plate negative (E up).`,
+    long: `E = vB = (${sci(v, 2)})(${sci(r.B.fixed, 2)}) = ${sci(E, 2)} N C⁻¹. Then V = Ed = (${sci(E, 2)})(${sci(r.d, 2)}) = <b>${sci(V, 2)} V</b>. B is out of the page, so the magnetic force on the proton points down; the electric force must point up, so <b>E is up</b> (bottom plate +).` };
+}
+
+/* ============================================================
+   MISSION 4 – Forces on currents
+   ============================================================ */
+const wireRounds = () => [
+  { type: 'wire', title: 'Tilt the wire', B: 0.25, L: 0.08, I: { fixed: 3.0 }, theta: {}, targetF: 0.030, targetDir: 'out',
+    brief: 'A <b>8.0 cm</b> wire carries <b>3.0 A</b> in a field of <b>0.25 T</b> that points to the right. Choose the current direction and the angle θ between wire and field so the force is <b>0.030 N, out of the page</b>.',
+    hint: 'F = BIL sin θ. Rearrange for sin θ, then use the slap rule (or Fleming) for the direction.' },
+  { type: 'wire', title: 'Right angles', B: 0.40, L: 0.05, I: { range: [0.5, 12] }, theta: { fixed: 90 }, targetF: 0.060, targetDir: 'into',
+    brief: 'A <b>5.0 cm</b> wire sits at <b>90°</b> to a <b>0.40 T</b> field that points to the right. Choose the current direction and size so the force is <b>0.060 N, into the page</b>.',
+    hint: 'At 90°, sin θ = 1, so F = BIL. Direction: fingers along B, thumb along the current, palm gives the force.' },
+  { type: 'pair', mode: 'predict', title: 'Predict, then calculate', r: 0.03, I1: 15, I2: 30, d1: 'into', d2: 'into',
+    brief: 'Two long parallel wires are <b>3.0 cm</b> apart. Wire 1 carries <b>15 A</b> and wire 2 carries <b>30 A</b>, both <b>into the page</b>. Will they attract or repel, and what is the force per metre?',
+    hint: 'F/L = μ₀I₁I₂ / 2πr, with μ₀ = 4π × 10⁻⁷ T m A⁻¹. Same direction: attract.' },
+  { type: 'pair', mode: 'design', title: 'Push them apart', r: 0.04, I1: 10, d1: 'into', target: 1.0e-3, targetKind: 'repel', I2range: [1, 60],
+    brief: 'Wire 1 carries <b>10 A into the page</b>. The wires are <b>4.0 cm</b> apart. Choose the direction and size of the current in wire 2 so the wires <b>repel</b> with <b>1.0 × 10⁻³ N per metre</b>.',
+    hint: 'Opposite currents repel. Rearrange F/L = μ₀I₁I₂ / 2πr for I₂.' }
+];
+function drawWire(ctx, W, H, r, st) {
+  panelBg(ctx, W, H);
+  ctx.fillStyle = '#c9423a'; ctx.fillRect(14, 70, 90, 280); ctx.fillStyle = '#3f6fd8'; ctx.fillRect(W - 104, 70, 90, 280);
+  txt(ctx, 'N', 59, 224, { size: 44, align: 'center', color: '#fff', weight: 700 }); txt(ctx, 'S', W - 59, 224, { size: 44, align: 'center', color: '#fff', weight: 700 });
+  for (let i = 0; i < 5; i++) arrow(ctx, 130, 90 + i * 60, 300, 90 + i * 60, 'rgba(114,230,255,.5)', 2, 11), arrow(ctx, 400, 90 + i * 60, 570, 90 + i * 60, 'rgba(114,230,255,.5)', 2, 11);
+  txt(ctx, 'B →', W / 2, 40, { size: 22, align: 'center', color: '#72e6ff' });
+  const th = (st.theta * Math.PI) / 180, cx = W / 2, cy = H / 2 + 10, half = 120;
+  const ux = Math.cos(th), uy = -Math.sin(th);
+  ctx.strokeStyle = 'rgba(185,200,244,.6)'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - 150, cy); ctx.lineTo(cx + 150, cy); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = '#ff9f43'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx - ux * half, cy - uy * half); ctx.lineTo(cx + ux * half, cy + uy * half); ctx.stroke();
+  const s = st.sdir || 0;
+  if (s) { const ax = cx + s * ux * 55, ay = cy + s * uy * 55; arrow(ctx, ax - s * ux * 30, ay - s * uy * 30, ax + s * ux * 40, ay + s * uy * 40, '#fff', 4, 16); txt(ctx, 'I', cx + s * ux * 70 + uy * 30, cy + s * uy * 70 - ux * 30 + 8, { size: 24, color: '#fff', align: 'center' }); }
+  ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, 70, 0, -th, th > 0 ? true : false); ctx.stroke();
+  txt(ctx, 'θ = ' + Math.round(st.theta) + '°', cx + 80, cy - 14, { size: 22, color: '#ffd23f' });
+  if (st.result) {
+    const f = st.result;
+    ctx.fillStyle = '#091b4f'; ctx.fillRect(cx - 330, cy + 66, 660, 66); ctx.strokeStyle = '#3d5db3'; ctx.lineWidth = 2; ctx.strokeRect(cx - 330, cy + 66, 660, 66);
+    if (f.dir === 'zero') txt(ctx, 'F = 0', cx, cy + 108, { size: 30, align: 'center', color: '#6ef0a8' });
+    else { ringSym(ctx, cx - 290, cy + 99, 24, f.dir, '#6ef0a8', 4); txt(ctx, `F = ${sci(f.F, 3)} N (${f.dir === 'out' ? 'out of' : 'into'} page)`, cx - 250, cy + 107, { size: 24, color: '#6ef0a8' }); }
+  }
+}
+function engineWire(ui, r) {
+  const { c, ctx, W, H } = makeCanvas(720, 420, 'A current-carrying wire in a magnetic field');
+  ui.stage.append(c);
+  const st = { theta: r.theta.fixed != null ? r.theta.fixed : 90, sdir: 0, result: null };
+  drawWire(ctx, W, H, r, st);
+  ui.brief.append(h('h2', {}, r.title), h('p', { html: r.brief }));
+  const needS = r.targetDir === 'out' ? -1 : 1;
+  const thetaAns = r.theta.fixed != null ? r.theta.fixed : Math.round(Math.asin(r.targetF / (r.B * (r.I.fixed || 1) * r.L)) * 180 / Math.PI);
+  const Ians = r.I.fixed || r.targetF / (r.B * r.L * Math.sin(thetaAns * Math.PI / 180));
+  if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, `Answer: current ${needS > 0 ? 'up' : 'down'} the wire, θ = ${thetaAns}°, I = ${sci(Ians, 3)} A.`));
+  const vertical = r.theta.fixed === 90;
+  const dirT = toggleGroup([{ key: '1', label: vertical ? 'Current up the page ↑' : 'Current up the wire ↗' }, { key: '-1', label: vertical ? 'Current down the page ↓' : 'Current down the wire ↙' }], k => { st.sdir = +k; st.result = null; drawWire(ctx, W, H, r, st); });
+  ui.controls.append(row('Current direction', dirT.el));
+  let thP = null, IP = null;
+  if (r.theta.fixed == null) { thP = param({ label: 'Angle θ between wire and B', unit: '°', min: 0, max: 90, value: 45, log: false, snap: v => Math.round(v) }, v => { st.theta = v; st.result = null; drawWire(ctx, W, H, r, st); }); ui.controls.append(thP.el); }
+  if (r.I.fixed) ui.controls.append(h('div', { class: 'msg info', html: `Current: <b>${sci(r.I.fixed, 2)} A</b> (fixed).` }));
+  else { IP = param({ label: 'Current I', unit: 'A', min: r.I.range[0], max: r.I.range[1], value: Math.sqrt(r.I.range[0] * r.I.range[1]) }); ui.controls.append(IP.el); }
+  let shots = 0, hinted = false, finished = false;
+  const testBtn = h('button', { class: 'btn primary', type: 'button', onclick: test }, 'Switch on and read the force meter');
+  const hintBtn = h('button', { class: 'btn ghost', type: 'button', onclick: () => { hinted = true; hintBtn.disabled = true; ui.say(`<b>Hint (−20 points).</b> ${r.hint}`, 'info'); } }, 'Hint');
+  ui.actions.append(testBtn, hintBtn);
+  const sol = () => `<b>Solution:</b> F = BIL sin θ = (${sci(r.B, 2)})(${sci(Ians, 3)})(${sci(r.L, 2)}) sin ${thetaAns}° = ${sci(r.targetF, 2)} N. Direction: current ${needS > 0 ? 'up' : 'down'} the ${vertical ? 'page' : 'wire'} with B to the right gives a force ${r.targetDir === 'out' ? 'out of' : 'into'} the page.`;
+  function finish(pts, ok, html) { finished = true; [testBtn, hintBtn].forEach(b => b.disabled = true); dirT.disable(true); thP && thP.disable(true); IP && IP.disable(true); ui.done(pts, ok, html); }
+  function test() {
+    if (finished) return;
+    if (!st.sdir) { ui.say('Choose the current direction first.', 'bad'); return; }
+    const I = r.I.fixed || IP.get(), th = r.theta.fixed != null ? r.theta.fixed : thP.get();
+    if (!(I > 0)) { ui.say('Enter a current above zero.', 'bad'); return; }
+    shots++;
+    const F = r.B * I * r.L * Math.sin(th * Math.PI / 180);
+    const dir = F < 1e-9 ? 'zero' : (st.sdir === 1 ? 'into' : 'out');
+    st.theta = th; st.result = { F, dir }; drawWire(ctx, W, H, r, st);
+    const dirOK = dir === r.targetDir, magOK = Math.abs(F - r.targetF) / r.targetF <= 0.05;
+    if (dirOK && magOK) finish(Math.max(20, 100 - 20 * (shots - 1) - (hinted ? 20 : 0)), true, `<b>${shots === 1 ? 'First try!' : 'Got it.'}</b> The meter reads ${sci(F, 3)} N, ${dir === 'out' ? 'out of' : 'into'} the page.<br>${sol()}`);
+    else {
+      ui.say(`Meter: <b>${dir === 'zero' ? '0 N' : sci(F, 3) + ' N, ' + (dir === 'out' ? 'out of' : 'into') + ' the page'}</b>. ${!dirOK ? 'Wrong direction. ' : ''}${!magOK ? (F < r.targetF ? 'Force too small.' : 'Force too big.') : ''}`, 'bad');
+      if (shots >= 3 && !ui.hasReveal) { ui.hasReveal = true; ui.actions.append(h('button', { class: 'btn ghost', type: 'button', onclick: () => finish(0, false, sol()) }, 'Show solution')); }
+    }
+  }
+}
+
+function drawPair(ctx, W, H, r, st) {
+  panelBg(ctx, W, H);
+  const sc = 38, cx = W / 2, cy = H / 2 - 4, half = r.r * 100 * sc / 2;
+  const move = st.move || 0; // + = closer, - = further
+  const gap = Math.max(26, half - move * 26);
+  const x1 = cx - gap, x2 = cx + gap;
+  [[x1, st.d1, '#ff9f43'], [x2, st.d2, '#ff9f43']].forEach(([x, d, col], i) => {
+    ctx.strokeStyle = 'rgba(114,230,255,.28)'; ctx.lineWidth = 2;
+    [52, 82, 112].forEach(R => { ctx.beginPath(); ctx.arc(x, cy, R, 0, TAU); ctx.stroke(); });
+    if (d) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, cy, 25, 0, TAU); ctx.fill(); ringSym(ctx, x, cy, 14, d, '#1a1a1a', 3); }
+    else { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#b9c8f4'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, cy, 25, 0, TAU); ctx.stroke(); ctx.setLineDash([]); txt(ctx, '?', x, cy + 8, { size: 24, align: 'center', color: '#b9c8f4' }); }
+    txt(ctx, `Wire ${i + 1}: ${st['I' + (i + 1)] ? sci(st['I' + (i + 1)], 3) + ' A' : '? A'}`, i === 0 ? x - 40 : x + 40, cy + 7, { size: 19, align: i === 0 ? 'right' : 'left' });
+  });
+  const ay = H - 30;
+  arrow(ctx, cx - half + 2, ay, cx - half + 14, ay, '#b9c8f4', 2, 7); arrow(ctx, cx + half - 2, ay, cx + half - 14, ay, '#b9c8f4', 2, 7);
+  ctx.strokeStyle = '#b9c8f4'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - half, ay); ctx.lineTo(cx + half, ay); ctx.stroke();
+  txt(ctx, `r = ${(r.r * 100).toFixed(1)} cm`, cx, ay - 8, { size: 17, align: 'center', color: '#b9c8f4' });
+  if (st.force) {
+    const col = '#6ef0a8', att = st.force.kind === 'attract';
+    arrow(ctx, x1, cy - 52, x1 + (att ? 54 : -54), cy - 52, col, 6, 18); arrow(ctx, x2, cy - 52, x2 + (att ? -54 : 54), cy - 52, col, 6, 18);
+    txt(ctx, `${att ? 'Attract' : 'Repel'}: F/L = ${sci(st.force.FL, 3)} N m⁻¹`, cx, 34, { size: 24, align: 'center', color: col });
+  }
+}
+function enginePair(ui, r) {
+  const { c, ctx, W, H } = makeCanvas(720, 400, 'Two long parallel wires seen end-on');
+  ui.stage.append(c);
+  const st = { d1: r.d1, d2: r.mode === 'predict' ? r.d2 : null, I1: r.I1, I2: r.mode === 'predict' ? r.I2 : null, force: null, move: 0 };
+  drawPair(ctx, W, H, r, st);
+  ui.brief.append(h('h2', {}, r.title), h('p', { html: r.brief }));
+  const FL = (a, b) => MU0 * a * b / (2 * Math.PI * r.r);
+  let finished = false, hinted = false;
+  const hintBtn = h('button', { class: 'btn ghost', type: 'button', onclick: () => { hinted = true; hintBtn.disabled = true; ui.say(`<b>Hint (−20 points).</b> ${r.hint}`, 'info'); } }, 'Hint');
+  function swing(kind, FLv, then) {
+    st.force = { kind, FL: FLv }; const dirn = kind === 'attract' ? 1 : -1;
+    animate(1100, p => { st.move = dirn * Math.sin(p * Math.PI) * 0.9; drawPair(ctx, W, H, r, st); }, () => { st.move = 0; drawPair(ctx, W, H, r, st); then && then(); });
+  }
+  if (r.mode === 'predict') {
+    const ans = FL(r.I1, r.I2), kindAns = r.d1 === r.d2 ? 'attract' : 'repel';
+    if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, `Answer: ${kindAns}, F/L = ${sci(ans, 3)} N/m.`));
+    const kindT = toggleGroup([{ key: 'attract', label: 'Attract' }, { key: 'repel', label: 'Repel' }]);
+    const inp = h('input', { type: 'text', inputmode: 'decimal', class: 'numbox', 'aria-label': 'Force per metre in newtons per metre', autocomplete: 'off', placeholder: 'e.g. 2.0e-3' });
+    const go = h('button', { class: 'btn primary', type: 'button', onclick: submit }, 'Check answer');
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+    ui.controls.append(row('Your prediction', kindT.el), h('div', { class: 'row param' }, h('span', { class: 'lab' }, 'Force per metre F/L'), h('div', { class: 'line' }, inp, h('span', { class: 'unit' }, 'N m⁻¹'))));
+    ui.actions.append(go, hintBtn);
+    function submit() {
+      if (finished) return;
+      const k = kindT.get(), v = parseNum(inp.value);
+      if (!k) { ui.say('Choose attract or repel first.', 'bad'); return; }
+      if (!(v > 0)) { ui.say('Type F/L as a number, e.g. 2.0e-3.', 'bad'); return; }
+      finished = true; [go, hintBtn].forEach(b => b.disabled = true); kindT.disable(true); inp.disabled = true;
+      const kOK = k === kindAns, vOK = Math.abs(v - ans) / ans <= 0.05;
+      const pts = (kOK ? 40 : 0) + (vOK ? 60 : 0) - (hinted ? 20 : 0);
+      swing(kindAns, ans, () => ui.done(Math.max(0, pts), kOK && vOK, `<b>${kOK && vOK ? 'Both right.' : kOK ? 'Direction right, number off.' : vOK ? 'Number right, direction wrong.' : 'Not this time.'}</b> Same-direction currents <b>attract</b> (the opposite of like charges). F/L = μ₀I₁I₂ / 2πr = (4π × 10⁻⁷)(${r.I1})(${r.I2}) / 2π(${sci(r.r, 2)}) = <b>${sci(ans, 3)} N m⁻¹</b>. Both wires feel this force, by Newton's third law.`));
+    }
+  } else {
+    const I2ans = r.target * 2 * Math.PI * r.r / (MU0 * r.I1);
+    if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, `Answer: wire 2 current out of the page, I₂ = ${sci(I2ans, 3)} A.`));
+    const dT = toggleGroup([{ key: 'into', label: '⊗ Wire 2 into page' }, { key: 'out', label: '⊙ Wire 2 out of page' }], k => { st.d2 = k; st.force = null; drawPair(ctx, W, H, r, st); });
+    const IP = param({ label: 'Current in wire 2', unit: 'A', min: r.I2range[0], max: r.I2range[1], value: Math.sqrt(r.I2range[0] * r.I2range[1]) }, v => { st.I2 = v; st.force = null; drawPair(ctx, W, H, r, st); });
+    st.I2 = IP.get(); drawPair(ctx, W, H, r, st);
+    ui.controls.append(row('Direction of current in wire 2', dT.el), IP.el);
+    let shots = 0;
+    const test = h('button', { class: 'btn primary', type: 'button', onclick: run }, 'Switch on');
+    ui.actions.append(test, hintBtn);
+    const sol = `<b>Solution:</b> I₂ = (F/L)(2πr) / (μ₀I₁) = (${sci(r.target, 2)})(2π)(${sci(r.r, 2)}) / (4π × 10⁻⁷)(${r.I1}) = <b>${sci(I2ans, 3)} A</b>, out of the page (opposite to wire 1, so they repel).`;
+    function end(pts, ok, html) { finished = true; [test, hintBtn].forEach(b => b.disabled = true); dT.disable(true); IP.disable(true); ui.done(pts, ok, html); }
+    function run() {
+      if (finished) return;
+      if (!st.d2) { ui.say('Choose the direction of the current in wire 2 first.', 'bad'); return; }
+      shots++; test.disabled = true;
+      const I2 = IP.get(), F = FL(r.I1, I2), kind = st.d2 === r.d1 ? 'attract' : 'repel';
+      st.I2 = I2;
+      swing(kind, F, () => {
+        test.disabled = false;
+        const kOK = kind === 'repel', mOK = Math.abs(F - r.target) / r.target <= 0.05;
+        if (kOK && mOK) end(Math.max(20, 100 - 20 * (shots - 1) - (hinted ? 20 : 0)), true, `<b>${shots === 1 ? 'First try!' : 'Got it.'}</b> They repel with ${sci(F, 3)} N m⁻¹.<br>${sol}`);
+        else {
+          ui.say(`The wires <b>${kind}</b> with F/L = <b>${sci(F, 3)} N m⁻¹</b>. ${!kOK ? 'You need them to repel. ' : ''}${kOK && !mOK ? (F < r.target ? 'Force too small.' : 'Force too big.') : ''}`, 'bad');
+          if (shots >= 3 && !ui.hasReveal) { ui.hasReveal = true; ui.actions.append(h('button', { class: 'btn ghost', type: 'button', onclick: () => end(0, false, sol) }, 'Show solution')); }
+        }
+      });
+    }
+  }
+}
+
+/* ============================================================
+   MISSION 5 – Myth busters (multiple choice)
+   ============================================================ */
+const TF = ['True', 'False'];
+function mythRounds() {
+  const Q = (q, options, correct, explain) => ({ type: 'mcq', q, options, correct, explain });
+  return [
+    Q('“A magnetic field exerts a force on any charge, even one that is not moving.”', TF, 1, 'Only <b>moving</b> charges feel a magnetic force, and only if they have a velocity component across B.'),
+    Q('“A magnetic force can increase the kinetic energy of a charged particle.”', TF, 1, 'The force is always at right angles to v, so it does no work. The speed stays constant; only the direction changes.'),
+    Q('“The hand rule gives the same direction of force for an electron as for a proton moving the same way.”', TF, 1, 'Reverse the force for negative charges. An electron is pushed the opposite way.'),
+    Q('“Two parallel wires with currents in the same direction repel, like charges.”', TF, 1, 'They <b>attract</b>. Opposite currents repel, the reverse of the charge rule.'),
+    Q('A proton moves <b>parallel</b> to a uniform magnetic field. What is the size of the magnetic force on it?', ['0', 'qvB / 2', 'qvB', '2qvB'], 0, 'θ = 0° and sin 0° = 0, so F = qvB sin θ = 0.'),
+    Q('An electron and a proton enter the same magnetic field at the same speed. Compared with the proton, the electron moves in a circle that is…', ['the same size, curving the same way', 'smaller, curving the opposite way', 'larger, curving the same way', 'smaller, curving the same way'], 1, 'r = mv/qB: a smaller mass gives a smaller radius. The opposite charge curves the opposite way.'),
+    Q('Double the mass <b>and</b> double the charge of a particle in a magnetic field, at the same speed. What happens to the radius of its path?', ['It doubles', 'It halves', 'It stays the same', 'It quadruples'], 2, 'r = mv/qB, and m/q does not change when both are doubled.'),
+    Q('A particle enters a velocity selector moving <b>faster</b> than E/B. Which way is it deflected?', ['Towards the magnetic force', 'Towards the electric force', 'Straight through'], 0, 'Faster means qvB is bigger than qE, so the magnetic force wins.'),
+    Q('Wire 1 carries current I and wire 2 carries 3I. The force on wire 2 is F. What is the force on wire 1?', ['F / 3', 'F / 2', 'F', '3F'], 2, 'Newton’s third law: the two forces are an action–reaction pair, so they are equal. The formula is symmetric in I₁ and I₂.')
+  ];
+}
+function engineMcq(ui, r) {
+  ui.brief.append(h('h2', {}, `Statement ${ui.i + 1}`), h('p', { html: r.q, style: 'font-size:21px' }));
+  const order = r.options.map((o, i) => i); const ord = r.options.length === 2 ? order : shuffle(order);
+  let done = false; const btns = {};
+  if (TEACHER) ui.brief.append(h('div', { class: 'teacher' }, 'Answer: ' + r.options[r.correct]));
+  const box = h('div', { class: 'opts' + (r.options.length === 2 ? '' : ' one') }, ord.map(i => (btns[i] = h('button', { class: 'btn opt', type: 'button', onclick: () => pickIt(i) }, r.options[i]))));
+  ui.controls.append(box);
+  function pickIt(i) {
+    if (done) return; done = true;
+    const ok = i === r.correct; btns[i].classList.add(ok ? 'right' : 'wrong'); btns[r.correct].classList.add('right');
+    Object.values(btns).forEach(b => b.disabled = true);
+    ui.done(ok ? 100 : 0, ok, `<b>${ok ? 'Correct.' : 'Not quite.'}</b> ${r.explain}`);
+  }
+}
+/* the stage for MCQ is a calm diagram, so the layout stays consistent */
+function mcqStage(ui) {
+  const { c, ctx, W, H } = makeCanvas(720, 300, 'Decorative field lines');
+  ui.stage.append(c); panelBg(ctx, W, H);
+  fieldSyms(ctx, 'into', 0, 0, W, H, 46, 'rgba(114,230,255,.28)');
+  txt(ctx, 'True or false? Think before you tap.', W / 2, H / 2 + 8, { size: 30, align: 'center', color: '#ffd23f' });
+}
+
+/* ============================================================
+   MISSION LIST + RUNNER
+   ============================================================ */
+const MISSIONS = [
+  { id: 'm1', num: '1', name: 'Slap-Rule Reflexes', topic: 'Magnetic force on a charge', blurb: 'Ten quick questions. Which way does the force point? Watch for the traps: neutrons, charges at rest and v ∥ B.', make: genSlap, engine: engineSlap, bonus: true,
+    outro: 'Charged particles from the Sun feel exactly this force, but only when they move across the field.' },
+  { id: 'm2', num: '2', name: 'Mass Spectrometer Lab', topic: 'Circular motion in a B-field', blurb: 'Set the field so each ion lands in the bin. Then separate neon isotopes and identify an unknown ion.', make: specRounds, engine: { spec: engineSpec, specid: engineSpecId },
+    outro: 'Back to the starter: charged particles from the Sun spiral along Earth’s field lines, with radius r = mv/qB. Near the poles they hit oxygen and nitrogen, which glow: the northern lights.' },
+  { id: 'm3', num: '3', name: 'Plates and Selectors', topic: 'Electric and crossed fields', blurb: 'Bend beams with electric fields, then balance forces to build a velocity selector. Finish by measuring a mystery speed.', make: chamberRounds, engine: engineChamber,
+    outro: 'A velocity selector passes one speed, v = E/B, whatever the charge or mass. Mass spectrometers use one to get all their ions moving at the same speed.' },
+  { id: 'm4', num: '4', name: 'Wires and Currents', topic: 'Forces on currents', blurb: 'Tilt a wire in a field, read the force meter, and set up attracting and repelling parallel wires.', make: wireRounds, engine: { wire: engineWire, pair: enginePair },
+    outro: 'The tiny force between parallel wires, 2 × 10⁻⁷ N per metre for 1 A at 1 m, was once used to define the ampere.' },
+  { id: 'm5', num: '5', name: 'Myth Busters', topic: 'All four sections', blurb: 'True or false and multiple choice. Can you spot the misconceptions that catch students out?', make: mythRounds, engine: engineMcq,
+    outro: 'Thoroughly conscious ignorance is the prelude to every real advance in science. Now you know which myths to watch for.' }
+];
+const S = { settings: { timer: true }, mi: 0, rounds: [], i: 0, score: 0, pts: [], streak: 0 };
+const $app = () => document.getElementById('app');
+
+function stars(n) { return h('span', { class: 'stars', 'aria-label': n + ' of 3 stars' }, [0, 1, 2].map(i => h('span', { class: i < n ? '' : 'off', 'aria-hidden': 'true' }, '★'))); }
+
+/* ---------- home ---------- */
+function showHome() {
+  stopAll(); window.scrollTo(0, 0);
+  const best = store.get();
+  const hero = makeCanvas(560, 340, 'A proton circling in a magnetic field pointing into the page');
+  const B = { v: 1 }, trail = []; let ang = 0;
+  const lab = h('div', { class: 'herolab' });
+  const slider = h('input', { type: 'range', min: 50, max: 200, value: 100, 'aria-label': 'Magnetic field strength B' });
+  const upd = () => { lab.firstChild && (lab.firstChild.innerHTML = `B = <b>${B.v.toFixed(2)} T</b> &nbsp;→&nbsp; r = mv/qB = <b>${(1.044 / B.v).toFixed(2)} cm</b>`); };
+  lab.append(h('div'), slider);
+  slider.addEventListener('input', () => { B.v = slider.value / 100; upd(); });
+  upd();
+  loop(dt => {
+    const { ctx, W, H } = hero, R = 92 / B.v, cx = W / 2, cy = H / 2 + 6;
+    ang += 2.1 * B.v * dt;
+    const x = cx + R * Math.cos(ang), y = cy - R * Math.sin(ang);
+    trail.push([x, y]); if (trail.length > 150) trail.shift();
+    panelBg(ctx, W, H); fieldSyms(ctx, 'into', 0, 0, W, H, 46, 'rgba(114,230,255,.35)');
+    ctx.lineWidth = 4; ctx.lineCap = 'round';
+    for (let i = 1; i < trail.length; i++) { ctx.strokeStyle = `rgba(255,124,107,${i / trail.length})`; ctx.beginPath(); ctx.moveTo(trail[i - 1][0], trail[i - 1][1]); ctx.lineTo(trail[i][0], trail[i][1]); ctx.stroke(); }
+    fdot(ctx, x, y, 13, '#ff7c6b'); txt(ctx, '+', x, y + 6, { size: 20, align: 'center', color: '#091b4f', weight: 700 });
+    arrow(ctx, x, y, x + (cx - x) * 0.35, y + (cy - y) * 0.35, '#ffd23f', 4, 12);
+    txt(ctx, 'F', x + (cx - x) * 0.42, y + (cy - y) * 0.42 - 6, { size: 17, color: '#ffd23f', align: 'center' });
+    txt(ctx, 'B into the page', 14, 26, { size: 17, color: '#72e6ff' });
+  });
+  const cards = MISSIONS.map((m, i) => h('button', { class: 'card', type: 'button', onclick: () => startMission(i) },
+    h('span', { class: 'num' }, m.num), h('h3', {}, m.name), h('span', { class: 'topic' }, m.topic), h('span', { class: 'blurb' }, m.blurb), stars(best[m.id] || 0)));
+  const tgl = toggleGroup([{ key: 'on', label: 'Timer on' }, { key: 'off', label: 'Timer off' }], k => { S.settings.timer = k === 'on'; }, S.settings.timer ? 'on' : 'off');
+  $app().replaceChildren(
+    h('div', { class: 'hero' },
+      h('div', {}, h('h1', {}, 'Field Ops'), h('div', { class: 'sub' }, 'Motion in electromagnetic fields'),
+        h('p', { class: 'lede' }, 'Steer charged particles, build a mass spectrometer and tune a velocity selector. Every answer comes from the physics.'),
+        h('p', { class: 'how' }, 'Slide the field strength on the right: double B and the radius halves. That is the idea behind missions 2 and 3.')),
+      h('div', { class: 'herobox' }, hero.c, lab)),
+    h('div', { class: 'cards' }, cards),
+    h('div', { class: 'foot' }, h('span', {}, 'Mission 1 timer:'), tgl.el, TEACHER ? h('span', { class: 'pill' }, 'Teacher mode: answers shown') : h('span', {}, 'Tip: add ?teacher to the web address to show answers.'))
+  );
+}
+
+/* ---------- mission runner ---------- */
+function startMission(mi) {
+  S.mi = mi; S.rounds = MISSIONS[mi].make(); S.i = 0; S.score = 0; S.pts = []; S.streak = 0; showRound();
+}
+function showRound() {
+  stopAll(); window.scrollTo(0, 0);
+  const m = MISSIONS[S.mi], r = S.rounds[S.i];
+  const scoreEl = h('span', { class: 'pill' }, 'Score ' + S.score);
+  const stage = h('div', { class: 'stage' }), brief = h('div', { class: 'brief' }), controls = h('div', { class: 'controls' }),
+    actions = h('div', { class: 'actions' }), feedback = h('div', { class: 'feedback', role: 'status', 'aria-live': 'polite' });
+  const ui = {
+    i: S.i, stage, brief, controls, actions, feedback, settings: S.settings, hasReveal: false,
+    get streak() { return S.streak; }, set streak(v) { S.streak = v; },
+    say(html, kind) { feedback.replaceChildren(h('div', { class: 'msg ' + (kind || 'info'), html })); },
+    hintLine(node) { controls.append(node); },
+    done(pts, ok, html) {
+      S.pts.push(pts); S.score += pts; scoreEl.textContent = 'Score ' + S.score;
+      const last = S.i === S.rounds.length - 1;
+      feedback.replaceChildren(h('div', { class: 'msg ' + (ok ? 'good' : 'bad'), html: html + `<div><b>+${pts} points.</b></div>` }));
+      const nb = h('button', { class: 'btn primary', type: 'button', onclick: () => { if (last) showSummary(); else { S.i++; showRound(); } } }, last ? 'See results' : 'Next');
+      actions.append(nb); nb.focus();
+    }
+  };
+  $app().replaceChildren(
+    h('div', { class: 'top' },
+      h('button', { class: 'btn ghost', type: 'button', onclick: showHome }, '◀ Missions'),
+      h('div', { class: 'ttl' }, h('small', {}, `Mission ${m.num}: ${m.topic}`), h('h2', {}, m.name)),
+      h('div', { class: 'hud' }, h('span', { class: 'pill' }, `Round ${S.i + 1} of ${S.rounds.length}`), scoreEl)),
+    h('div', { class: 'grid' }, stage, h('div', { class: 'panel' }, brief, controls, actions, feedback)));
+  if (r.type === 'mcq') mcqStage(ui);
+  const eng = typeof m.engine === 'function' ? m.engine : m.engine[r.type];
+  eng(ui, r);
+}
+function showSummary() {
+  stopAll(); window.scrollTo(0, 0);
+  const m = MISSIONS[S.mi], n = S.rounds.length, max = n * 100;
+  const frac = Math.min(1, S.score / max), st = frac >= .9 ? 3 : frac >= .65 ? 2 : frac >= .3 ? 1 : 0;
+  const best = store.get(); if ((best[m.id] || 0) < st) { best[m.id] = st; store.set(best); }
+  const next = S.mi + 1 < MISSIONS.length ? S.mi + 1 : null;
+  $app().replaceChildren(h('div', { class: 'summary' },
+    h('h2', {}, `Mission ${m.num} complete`), h('div', { class: 'big' }, S.score), stars(st),
+    h('p', {}, st === 3 ? 'Excellent: you are ready for the exam questions.' : st === 2 ? 'Solid. Replay to polish the rounds where you lost points.' : 'Worth another go. Try the hints and read the worked solutions.'),
+    h('ul', {}, S.pts.map((p, i) => h('li', {}, h('span', {}, `Round ${i + 1}`), h('b', {}, p)))),
+    h('p', { class: 'how' }, m.outro),
+    h('div', { class: 'actions', style: 'margin-top:16px' },
+      next != null ? h('button', { class: 'btn primary', type: 'button', onclick: () => startMission(next) }, 'Next mission') : null,
+      h('button', { class: 'btn', type: 'button', onclick: () => startMission(S.mi) }, 'Play again'),
+      h('button', { class: 'btn ghost', type: 'button', onclick: showHome }, 'All missions'))));
+}
+
+/* ---------- test hook (used by the checker; harmless in the browser) ---------- */
+window.__fieldops = { simChamber, specLand, slapForce, genSlap, chamberSolution, chamberRounds, specRounds, wireRounds, mythRounds, sci, parseNum, DIR, PART, E_CH, MP, ME };
+
+showHome();
+})();
+</script>
+</body>
+</html>
