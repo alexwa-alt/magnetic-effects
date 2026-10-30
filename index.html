@@ -113,6 +113,17 @@ button{font:inherit; color:inherit; cursor:pointer}
 .summary li{display:flex; justify-content:space-between; border-bottom:1px dashed var(--line); padding:3px 0}
 .big{font-family:var(--display); font-size:64px; color:var(--chalk); line-height:1}
 
+.setup{max-width:560px}
+.setup p{font-size:18px}
+.privacy{border-left:5px solid var(--ok); background:rgba(7,22,66,.6); padding:8px 14px; border-radius:0 10px 10px 0; margin:12px 0}
+.camera{position:relative; width:100%; max-width:420px; aspect-ratio:1/1; margin:14px auto; border-radius:14px; overflow:hidden; background:#050f33; border:2px solid var(--line)}
+.camera video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
+.camera .oval{position:absolute; left:19%; top:11%; width:62%; height:78%; border-radius:50%; border:4px dashed var(--chalk); box-shadow:0 0 0 999px rgba(9,27,79,.72)}
+.camera .cap{position:absolute; left:0; right:0; bottom:8px; text-align:center; font-weight:600; font-size:16px; text-shadow:0 0 6px #050f33}
+.iconrow{display:flex; gap:28px; justify-content:center; align-items:flex-end; margin:14px 0}
+.iconrow figure{margin:0; text-align:center; font-weight:600}
+.iconrow img{display:block; height:150px; width:auto; margin:0 auto 4px}
+.mini img{height:64px}
 @media (max-width:900px){
   .hero{grid-template-columns:1fr}
   .grid{grid-template-columns:1fr}
@@ -242,6 +253,37 @@ function fieldSyms(ctx, kind, x0, y0, x1, y1, gap, color) {
   for (let y = y0 + gap / 2; y < y1; y += gap) for (let x = x0 + gap / 2; x < x1; x += gap)
     kind === 'into' ? xmark(ctx, x, y, 4.5, color, 1.7) : fdot(ctx, x, y, 3, color);
 }
+/* ---------- particle icons: faces cut out in an oval, outlined, with a charge badge.
+   They live only in memory (canvas elements): nothing is uploaded, stored or saved. ---------- */
+const ICON = { proton: null, electron: null };
+const ICON_COL = { proton: '#ff3b3b', electron: '#2f7bff' };
+function bakeIcon(src, kind) {
+  const W = 160, H = 200, col = ICON_COL[kind], cy = 96;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.save(); g.beginPath(); g.ellipse(W / 2, cy, 68, 88, 0, 0, TAU); g.clip();
+  if (src) { // cover-fit the photo inside the oval
+    const sc = Math.max(136 / src.width, 176 / src.height);
+    g.drawImage(src, W / 2 - src.width * sc / 2, cy - src.height * sc / 2, src.width * sc, src.height * sc);
+  } else { // cartoon placeholder
+    g.fillStyle = kind === 'proton' ? '#ffb3a8' : '#b9ccff'; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(9,27,79,.55)'; g.beginPath(); g.arc(W / 2, 80, 30, 0, TAU); g.fill();
+    g.beginPath(); g.ellipse(W / 2, 178, 58, 52, 0, 0, TAU); g.fill();
+  }
+  g.restore();
+  g.lineWidth = 9; g.strokeStyle = col; g.beginPath(); g.ellipse(W / 2, cy, 68, 88, 0, 0, TAU); g.stroke();
+  g.fillStyle = col; g.beginPath(); g.arc(138, 170, 17, 0, TAU); g.fill();   // tiny charge badge in the corner
+  g.strokeStyle = '#fff'; g.lineWidth = 4; g.lineCap = 'round'; g.beginPath(); g.moveTo(130, 170); g.lineTo(146, 170);
+  if (kind === 'proton') { g.moveTo(138, 162); g.lineTo(138, 178); }
+  g.stroke();
+  return c;
+}
+function setFaces(me, friend) { ICON.proton = bakeIcon(me, 'proton'); ICON.electron = bakeIcon(friend, 'electron'); }
+function drawIcon(ctx, kind, x, y, r) { const ic = ICON[kind]; if (ic) ctx.drawImage(ic, x - 0.8 * r, y - r, 1.6 * r, 2 * r); }
+const kindOf = n => /proton/i.test(n) ? 'proton' : /electron/i.test(n) ? 'electron' : null;
+const iconImg = (kind, cls) => h('img', { src: ICON[kind].toDataURL('image/png'), alt: kind === 'proton' ? 'Proton icon' : 'Electron icon', class: cls || '' });
+setFaces(null, null);
+
 function panelBg(ctx, W, H) { ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#091b4f'; ctx.fillRect(0, 0, W, H); }
 
 /* ---------- UI widgets ---------- */
@@ -358,18 +400,21 @@ function drawSlap(ctx, W, H, r, reveal) {
     }
   }
   txt(ctx, 'B ' + (r.B === 'into' ? 'into the page' : r.B === 'out' ? 'out of the page' : 'points ' + DIR[r.B].name), 16, 28, { size: 20, color: '#72e6ff' });
-  const w = PART[r.who];
-  fdot(ctx, cx, cy, 30, w.col);
-  txt(ctx, w.lab, cx, cy + 9, { size: 28, color: '#091b4f', align: 'center', weight: 700 });
-  txt(ctx, w.name, cx, cy - 46, { size: 18, align: 'center' });
-  if (!r.v) txt(ctx, 'at rest', cx, cy + 62, { size: 20, align: 'center', color: '#ffd23f' });
+  const w = PART[r.who], ik = (r.who === 'proton' || r.who === 'electron') ? r.who : null, R0 = ik ? 54 : 38;
+  if (ik) { drawIcon(ctx, ik, cx, cy, 46); txt(ctx, w.name, cx + 58, cy + 66, { size: 18 }); }
+  else {
+    fdot(ctx, cx, cy, 30, w.col);
+    txt(ctx, w.lab, cx, cy + 9, { size: 28, color: '#091b4f', align: 'center', weight: 700 });
+    txt(ctx, w.name, cx, cy - 46, { size: 18, align: 'center' });
+  }
+  if (!r.v) txt(ctx, 'at rest', cx, cy + (ik ? 84 : 62), { size: 20, align: 'center', color: '#ffd23f' });
   else if (r.v === 'out' || r.v === 'into') {
     ringSym(ctx, cx + 80, cy - 66, 18, r.v, '#ffd23f', 3);
     txt(ctx, 'v ' + (r.v === 'out' ? '(out of page)' : '(into page)'), cx + 106, cy - 60, { size: 18, color: '#ffd23f' });
   } else {
     const [dx, dy] = DIR[r.v].px;
-    arrow(ctx, cx + dx * 38, cy + dy * 38, cx + dx * 170, cy + dy * 170, '#ffd23f', 5, 18);
-    txt(ctx, 'v', cx + dx * 190 - (dx ? 0 : 20), cy + dy * 190 + 6, { size: 22, color: '#ffd23f', align: 'center' });
+    arrow(ctx, cx + dx * R0, cy + dy * R0, cx + dx * (R0 + 132), cy + dy * (R0 + 132), '#ffd23f', 5, 18);
+    txt(ctx, 'v', cx + dx * (R0 + 152) - (dx ? 0 : 20), cy + dy * (R0 + 152) + 6, { size: 22, color: '#ffd23f', align: 'center' });
   }
   if (reveal) {
     const f = slapAnswer(r);
@@ -379,8 +424,8 @@ function drawSlap(ctx, W, H, r, reveal) {
       txt(ctx, 'F ' + (f === 'out' ? '(out of page)' : '(into page)'), cx - 70, cy + 74, { size: 20, color: '#6ef0a8' });
     } else {
       const [dx, dy] = DIR[f].px;
-      arrow(ctx, cx + dx * 38, cy + dy * 38, cx + dx * 150, cy + dy * 150, '#6ef0a8', 7, 20);
-      txt(ctx, 'F', cx + dx * 176 - (dx ? 0 : 22), cy + dy * 176 + 8, { size: 26, color: '#6ef0a8', align: 'center' });
+      arrow(ctx, cx + dx * R0, cy + dy * R0, cx + dx * (R0 + 112), cy + dy * (R0 + 112), '#6ef0a8', 7, 20);
+      txt(ctx, 'F', cx + dx * (R0 + 138) - (dx ? 0 : 22), cy + dy * (R0 + 138) + 8, { size: 26, color: '#6ef0a8', align: 'center' });
     }
   }
 }
@@ -498,7 +543,7 @@ function drawSpec(ctx, W, H, st) {
     }
     ctx.stroke();
     const hx = x0 + rs.sx * R * (1 - Math.cos(th)), hy = y0 - R * Math.sin(th);
-    fdot(ctx, hx, hy, 7, rs.ion.col);
+    const kk = kindOf(rs.ion.name); if (kk) drawIcon(ctx, kk, hx, hy - 12, 18); else fdot(ctx, hx, hy, 7, rs.ion.col);
     if (st.p >= 1) {
       const lx = x0 + rs.dx * 100 * cm;
       if (lx > 12 && lx < W - 12) {
@@ -698,7 +743,7 @@ function drawChamber(ctx, W, H, r, st) {
     ctx.strokeStyle = sm.part.col; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.beginPath();
     for (let i = 0; i <= upto; i++) { const [px, py] = sm.sim.pts[i]; const X = g.x0 + px * g.s, Y = g.cy - py * g.s; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
     ctx.stroke();
-    const [hx, hy] = sm.sim.pts[upto]; fdot(ctx, g.x0 + hx * g.s, g.cy - hy * g.s, 6, sm.part.col);
+    const [hx, hy] = sm.sim.pts[upto], kk = kindOf(sm.part.name); if (kk) drawIcon(ctx, kk, g.x0 + hx * g.s, g.cy - hy * g.s, 17); else fdot(ctx, g.x0 + hx * g.s, g.cy - hy * g.s, 6, sm.part.col);
   });
 }
 
@@ -1022,7 +1067,7 @@ const MISSIONS = [
   { id: 'm5', num: '5', name: 'Myth Busters', topic: 'All four sections', blurb: 'True or false and multiple choice. Can you spot the misconceptions that catch students out?', make: mythRounds, engine: engineMcq,
     outro: 'Thoroughly conscious ignorance is the prelude to every real advance in science. Now you know which myths to watch for.' }
 ];
-const S = { settings: { timer: true }, mi: 0, rounds: [], i: 0, score: 0, pts: [], streak: 0 };
+const S = { setupDone: false, settings: { timer: true }, mi: 0, rounds: [], i: 0, score: 0, pts: [], streak: 0 };
 const $app = () => document.getElementById('app');
 
 function stars(n) { return h('span', { class: 'stars', 'aria-label': n + ' of 3 stars' }, [0, 1, 2].map(i => h('span', { class: i < n ? '' : 'off', 'aria-hidden': 'true' }, '★'))); }
@@ -1047,7 +1092,7 @@ function showHome() {
     panelBg(ctx, W, H); fieldSyms(ctx, 'into', 0, 0, W, H, 46, 'rgba(114,230,255,.35)');
     ctx.lineWidth = 4; ctx.lineCap = 'round';
     for (let i = 1; i < trail.length; i++) { ctx.strokeStyle = `rgba(255,124,107,${i / trail.length})`; ctx.beginPath(); ctx.moveTo(trail[i - 1][0], trail[i - 1][1]); ctx.lineTo(trail[i][0], trail[i][1]); ctx.stroke(); }
-    fdot(ctx, x, y, 13, '#ff7c6b'); txt(ctx, '+', x, y + 6, { size: 20, align: 'center', color: '#091b4f', weight: 700 });
+    drawIcon(ctx, 'proton', x, y, 26);
     arrow(ctx, x, y, x + (cx - x) * 0.35, y + (cy - y) * 0.35, '#ffd23f', 4, 12);
     txt(ctx, 'F', x + (cx - x) * 0.42, y + (cy - y) * 0.42 - 6, { size: 17, color: '#ffd23f', align: 'center' });
     txt(ctx, 'B into the page', 14, 26, { size: 17, color: '#72e6ff' });
@@ -1062,8 +1107,77 @@ function showHome() {
         h('p', { class: 'how' }, 'Slide the field strength on the right: double B and the radius halves. That is the idea behind missions 2 and 3.')),
       h('div', { class: 'herobox' }, hero.c, lab)),
     h('div', { class: 'cards' }, cards),
+    h('div', { class: 'foot iconrow mini' }, h('figure', {}, iconImg('proton'), 'Proton'), h('figure', {}, iconImg('electron'), 'Electron'), h('button', { class: 'btn', type: 'button', onclick: showSetup }, 'Change photos')),
     h('div', { class: 'foot' }, h('span', {}, 'Mission 1 timer:'), tgl.el, TEACHER ? h('span', { class: 'pill' }, 'Teacher mode: answers shown') : h('span', {}, 'Tip: add ?teacher to the web address to show answers.'))
   );
+}
+
+/* ---------- camera setup: two face photos become the proton and the electron ---------- */
+function captureFace(video, box) {
+  const cw = box.clientWidth, ch = box.clientHeight, vw = video.videoWidth, vh = video.videoHeight;
+  const sc = Math.max(cw / vw, ch / vh), ox = (cw - vw * sc) / 2, oy = (ch - vh * sc) / 2;
+  const ow = cw * 0.62, oh = ch * 0.78, ox0 = cw * 0.19, oy0 = ch * 0.11;   // matches the .oval overlay in the CSS
+  const sx = (ox0 - ox) / sc, sy = (oy0 - oy) / sc, sw = ow / sc, sh = oh / sc;
+  const c = document.createElement('canvas'); c.width = 240; c.height = Math.round(240 * sh / sw);
+  const g = c.getContext('2d'); g.translate(c.width, 0); g.scale(-1, 1);       // mirrored, like the preview
+  g.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c;
+}
+function showSetup() {
+  stopAll(); window.scrollTo(0, 0);
+  let stream = null; const faces = { me: null, friend: null };
+  cleanups.push(() => { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; });
+  const root = h('div', { class: 'summary setup' }); $app().replaceChildren(root);
+  const finish = () => { S.setupDone = true; showHome(); };
+  const useCartoon = () => { setFaces(null, null); finish(); };
+
+  function intro(msg) {
+    root.replaceChildren(h('h2', {}, 'Be the particles'),
+      h('p', {}, 'Field Ops turns you and a friend into a proton and an electron. Your faces are cut out and used as the particles in every mission.'),
+      h('p', { class: 'privacy', html: '<b>Your photos stay on this device.</b> Nothing is uploaded, saved or shared, and they disappear when you close or refresh the page.' }),
+      msg ? h('p', { class: 'msg bad', html: msg }) : null,
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', type: 'button', onclick: startCamera }, 'Turn on camera'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: useCartoon }, 'Skip: use cartoon icons')));
+  }
+  async function startCamera() {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { intro('This browser cannot open the camera here (it needs a secure https address). You can skip and use cartoon icons.'); return; }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 960 } }, audio: false });
+      step(1);
+    } catch (e) { intro('The camera was blocked or not found. Allow camera access in your browser, or skip and use cartoon icons.'); }
+  }
+  function step(n) {
+    const me = n === 1, kind = me ? 'proton' : 'electron';
+    const video = h('video', { autoplay: true, playsinline: true, muted: true }); video.muted = true; video.srcObject = stream;
+    const play = video.play && video.play(); if (play && play.catch) play.catch(() => {});
+    const box = h('div', { class: 'camera' }, video, h('div', { class: 'oval' }), h('div', { class: 'cap' }, 'Fit your face inside the oval'));
+    root.replaceChildren(
+      h('h2', {}, me ? 'Photo 1 of 2: your face' : 'Photo 2 of 2: your friend’s face'),
+      h('p', { html: me ? 'You will be the <b style="color:#ff6b6b">proton</b> (red outline, + corner).' : 'Your friend will be the <b style="color:#6aa0ff">electron</b> (blue outline, − corner).' }),
+      me ? null : h('p', { class: 'privacy', html: '<b>Ask your friend first.</b> They must be happy to be in the game. If they would rather not, use a cartoon icon.' }),
+      box,
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', type: 'button', onclick: take }, 'Take photo'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => { faces[me ? 'me' : 'friend'] = null; me ? step(2) : done(); } }, 'Use a cartoon icon instead')));
+    function take() {
+      if (!video.videoWidth) { return; }
+      const cap = captureFace(video, box), prev = bakeIcon(cap, kind);
+      root.replaceChildren(h('h2', {}, 'Looking good?'),
+        h('div', { class: 'iconrow' }, h('figure', {}, h('img', { src: prev.toDataURL('image/png'), alt: 'Your cut-out icon preview' }), me ? 'Proton' : 'Electron')),
+        h('div', { class: 'actions' },
+          h('button', { class: 'btn primary', type: 'button', onclick: () => { faces[me ? 'me' : 'friend'] = cap; me ? step(2) : done(); } }, 'Use this photo'),
+          h('button', { class: 'btn', type: 'button', onclick: () => step(n) }, 'Retake')));
+    }
+  }
+  function done() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    setFaces(faces.me, faces.friend);
+    root.replaceChildren(h('h2', {}, 'Meet your particles'),
+      h('div', { class: 'iconrow' }, h('figure', {}, iconImg('proton'), 'Proton'), h('figure', {}, iconImg('electron'), 'Electron')),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', type: 'button', onclick: finish }, 'Start playing')));
+  }
+  intro();
 }
 
 /* ---------- mission runner ---------- */
@@ -1117,9 +1231,9 @@ function showSummary() {
 }
 
 /* ---------- test hook (used by the checker; harmless in the browser) ---------- */
-window.__fieldops = { simChamber, specLand, slapForce, genSlap, chamberSolution, chamberRounds, specRounds, wireRounds, mythRounds, sci, parseNum, DIR, PART, E_CH, MP, ME };
+window.__fieldops = { setFaces, bakeIcon, ICON, showHome, simChamber, specLand, slapForce, genSlap, chamberSolution, chamberRounds, specRounds, wireRounds, mythRounds, sci, parseNum, DIR, PART, E_CH, MP, ME };
 
-showHome();
+showSetup();   // camera step comes first; students can skip it
 })();
 </script>
 </body>
